@@ -257,6 +257,7 @@ class YOLOService:
                 "source": image_path,
                 "conf": conf,
                 "iou": DEFAULT_IOU_THRESHOLD,
+                "imgsz": 640,
                 "verbose": False
             }
             if SAR_TARGET_CLASS_IDS:
