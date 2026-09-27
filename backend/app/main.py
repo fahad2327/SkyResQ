@@ -3,6 +3,19 @@ SkyResQ Independent API - Initial FastAPI Backend
 AI-powered aerial rescue and situational awareness backend.
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Ensure both backend directory and project root are in sys.path
+_current_dir = Path(__file__).resolve().parent  # app/
+_backend_dir = _current_dir.parent  # backend/
+_root_dir = _backend_dir.parent  # project root/
+
+for _p in [str(_backend_dir), str(_root_dir)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from typing import Dict, Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
