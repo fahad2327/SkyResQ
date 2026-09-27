@@ -2675,11 +2675,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function startInferenceLoop() {
     stopInferenceLoop();
+    // Dynamically adjust polling rate based on local vs cloud deployment
+    const currentBase = (window.SkyResQAPI && typeof window.SkyResQAPI.getBaseUrl === 'function') ? window.SkyResQAPI.getBaseUrl() : '';
+    const isCloudBackend = currentBase.includes('.onrender.com') || currentBase.includes('.vercel.app') || (!currentBase.includes(':8000') && !currentBase.includes('localhost') && !currentBase.includes('127.0.0.1'));
+    const intervalMs = isCloudBackend ? 2000 : 750; // 2.0s for Cloud AI to prevent request queueing, 0.75s for Local GPU/CPU
+
     inferenceLoopTimer = setInterval(async () => {
       if (!isWebcamActive || isInferring) return;
       if (!toggleContinuousDetection || !toggleContinuousDetection.checked) return;
       await captureAndRunWebcamInference();
-    }, 700); // Debounced inference interval (~1.4 FPS ideal for YOLO laptop hardware)
+    }, intervalMs);
   }
 
   function stopInferenceLoop() {
@@ -2695,12 +2700,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const startTime = performance.now();
 
     try {
-      const hCanvas = webcamHiddenCanvas;
-      const hCtx = hCanvas.getContext('2d');
-      hCtx.drawImage(laptopWebcamVideo, 0, 0, hCanvas.width, hCanvas.height);
+      const vw = laptopWebcamVideo.videoWidth || 640;
+      const vh = laptopWebcamVideo.videoHeight || 480;
 
-      // Convert captured frame to JPEG blob
-      const blob = await new Promise(resolve => hCanvas.toBlob(resolve, 'image/jpeg', 0.8));
+      // Downscale hidden canvas to max 640px dimension for ultra-fast upload (~30KB) and sub-50ms YOLO inference
+      const maxDim = 640;
+      let targetW = vw;
+      let targetH = vh;
+      if (vw > maxDim || vh > maxDim) {
+        if (vw >= vh) {
+          targetW = maxDim;
+          targetH = Math.round((vh / vw) * maxDim);
+        } else {
+          targetH = maxDim;
+          targetW = Math.round((vw / vh) * maxDim);
+        }
+      }
+
+      const hCanvas = webcamHiddenCanvas;
+      if (hCanvas.width !== targetW || hCanvas.height !== targetH) {
+        hCanvas.width = targetW;
+        hCanvas.height = targetH;
+      }
+      const hCtx = hCanvas.getContext('2d');
+      hCtx.drawImage(laptopWebcamVideo, 0, 0, targetW, targetH);
+
+      // Convert captured frame to lightweight compressed JPEG blob (~25-40KB)
+      const blob = await new Promise(resolve => hCanvas.toBlob(resolve, 'image/jpeg', 0.70));
       if (!blob) return;
 
       const confThreshold = webcamConfSlider ? parseFloat(webcamConfSlider.value) / 100 : 0.25;
@@ -2721,7 +2747,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (webcamInferenceFps) webcamInferenceFps.textContent = `${fps} FPS`;
 
       if (res.success && res.data) {
-        handleWebcamDetections(res.data);
+        handleWebcamDetections(res.data, targetW, targetH);
+      } else if (res.error) {
+        console.warn('[SkyResQ Webcam] Inference response notice:', res.error);
       }
 
     } catch (err) {
@@ -2731,19 +2759,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function handleWebcamDetections(data) {
+  function handleWebcamDetections(data, targetW, targetH) {
     const detections = data.detections || [];
     if (valWebcamDetections) valWebcamDetections.textContent = detections.length;
 
-    // 1. Draw bounding boxes on the overlay canvas
-    drawOverlayBoxes(detections);
+    const overlayW = (webcamOverlayCanvas && webcamOverlayCanvas.width) || targetW || 640;
+    const overlayH = (webcamOverlayCanvas && webcamOverlayCanvas.height) || targetH || 480;
+
+    const frameW = targetW || data.image_width || overlayW;
+    const frameH = targetH || data.image_height || overlayH;
+
+    const scaleX = overlayW / frameW;
+    const scaleY = overlayH / frameH;
+
+    // 1. Draw bounding boxes on the overlay canvas with resolution scaling
+    drawOverlayBoxes(detections, scaleX, scaleY);
 
     // 2. Update real-time target items list
     updateWebcamTargetsList(detections);
 
     const now = Date.now();
-    const vw = (webcamOverlayCanvas && webcamOverlayCanvas.width) || 640;
-    const vh = (webcamOverlayCanvas && webcamOverlayCanvas.height) || 480;
+    const vw = overlayW;
+    const vh = overlayH;
 
     // Prune stale tracked targets (older than TRACK_TIMEOUT_MS)
     for (const [tId, target] of activeTrackedTargets.entries()) {
@@ -2755,11 +2792,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Process target tracking & deduplication (Prevents spamming casualties on every frame)
     detections.forEach(item => {
       const isPerson = item.class_name.toLowerCase() === 'person';
-      const box = item.box || { x1: 0, y1: 0, x2: 0, y2: 0 };
+      const rawBox = item.box || item.bbox || { x1: 0, y1: 0, x2: 0, y2: 0 };
+      const bx1 = rawBox.x1 * scaleX;
+      const by1 = rawBox.y1 * scaleY;
+      const bx2 = (rawBox.x2 !== undefined ? rawBox.x2 : (rawBox.x1 + (rawBox.width || 0))) * scaleX;
+      const by2 = (rawBox.y2 !== undefined ? rawBox.y2 : (rawBox.y1 + (rawBox.height || 0))) * scaleY;
 
       // Calculate normalized center coordinates of target (0.0 to 1.0)
-      const cx = (box.x1 + box.x2) / (2 * vw);
-      const cy = (box.y1 + box.y2) / (2 * vh);
+      const cx = (bx1 + bx2) / (2 * vw);
+      const cy = (by1 + by2) / (2 * vh);
 
       // Match against existing actively tracked targets of the same class
       let matchedId = null;
@@ -2830,31 +2871,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function drawOverlayBoxes(detections) {
+  function drawOverlayBoxes(detections, scaleX = 1, scaleY = 1) {
     if (!webcamOverlayCanvas) return;
     const ctx = webcamOverlayCanvas.getContext('2d');
     ctx.clearRect(0, 0, webcamOverlayCanvas.width, webcamOverlayCanvas.height);
 
     detections.forEach(item => {
-      const box = item.box;
-      if (!box) return;
+      const rawBox = item.box || item.bbox;
+      if (!rawBox) return;
 
       const isPerson = item.class_name.toLowerCase() === 'person';
       const strokeColor = isPerson ? '#06b6d4' : '#f59e0b';
 
+      const x1 = rawBox.x1 * scaleX;
+      const y1 = rawBox.y1 * scaleY;
+      const boxW = rawBox.width !== undefined ? rawBox.width : (rawBox.x2 - rawBox.x1);
+      const boxH = rawBox.height !== undefined ? rawBox.height : (rawBox.y2 - rawBox.y1);
+      const w = boxW * scaleX;
+      const h = boxH * scaleY;
+
       // Draw bounding box
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 3;
-      ctx.strokeRect(box.x1, box.y1, box.width, box.height);
+      ctx.strokeRect(x1, y1, w, h);
 
       // Corner accent reticles
-      const cLen = Math.min(12, box.width / 4, box.height / 4);
+      const cLen = Math.min(14, Math.max(4, w / 4), Math.max(4, h / 4));
       ctx.lineWidth = 4;
       // Top left
       ctx.beginPath();
-      ctx.moveTo(box.x1, box.y1 + cLen);
-      ctx.lineTo(box.x1, box.y1);
-      ctx.lineTo(box.x1 + cLen, box.y1);
+      ctx.moveTo(x1, y1 + cLen);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x1 + cLen, y1);
       ctx.stroke();
 
       // Label background
@@ -2868,11 +2916,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const bgH = 20;
 
       ctx.fillStyle = strokeColor;
-      ctx.fillRect(box.x1, Math.max(0, box.y1 - bgH), bgW, bgH);
+      ctx.fillRect(x1, Math.max(0, y1 - bgH), bgW, bgH);
 
       // Label text
       ctx.fillStyle = '#0b111e';
-      ctx.fillText(label, box.x1 + 5, Math.max(14, box.y1 - 5));
+      ctx.fillText(label, x1 + 5, Math.max(14, y1 - 5));
     });
   }
 

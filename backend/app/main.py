@@ -52,6 +52,18 @@ app.add_middleware(
 # Register modular v1 API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.on_event("startup")
+def preload_yolo_model_async():
+    """Warms up YOLO model in background thread to avoid cold inference lag."""
+    import threading
+    def _warmup():
+        try:
+            from ai.yolo_service import yolo_service
+            yolo_service.load_model()
+        except Exception:
+            pass
+    threading.Thread(target=_warmup, daemon=True).start()
+
 # Mount media files for serving annotated detection images
 import os
 from pathlib import Path

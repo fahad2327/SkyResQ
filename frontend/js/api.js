@@ -21,38 +21,42 @@ const SkyResQAPI = (() => {
     }
 
     if (typeof window !== 'undefined' && window.location) {
+      // 1. Query parameters override
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('api')) return urlParams.get('api').replace(/\/+$/, '');
+
+      // 2. Localhost / Local Wi-Fi network detection
+      const protocol = window.location.protocol || 'http:';
+      const hostname = window.location.hostname || '';
+      const port = window.location.port;
+
+      const isLocal = (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.') ||
+        hostname.endsWith('.local')
+      );
+
+      if (isLocal) {
+        return `${protocol}//${hostname}:8000`;
+      }
+
+      // 3. Check localStorage for cloud deployments
+      try {
+        const stored = localStorage.getItem('skyresq_backend_url');
+        if (stored && stored.trim() && !stored.includes('localhost') && !stored.includes('127.0.0.1')) {
+          return stored.trim().replace(/\/+$/, '');
+        }
+      } catch (e) {}
+
       if (window.__SKYRESQ_API_URL__) return window.__SKYRESQ_API_URL__.replace(/\/+$/, '');
       if (window.__SKYRESQ_CONFIG__ && window.__SKYRESQ_CONFIG__.BACKEND_URL) {
         return window.__SKYRESQ_CONFIG__.BACKEND_URL.replace(/\/+$/, '');
       }
 
-      // Check URL query parameters: ?api=https://...
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('api')) return urlParams.get('api').replace(/\/+$/, '');
-
-      // Check localStorage for persisted user backend
-      try {
-        const stored = localStorage.getItem('skyresq_backend_url');
-        if (stored && stored.trim()) return stored.trim().replace(/\/+$/, '');
-      } catch (e) {}
-
-      const protocol = window.location.protocol || 'http:';
-      const hostname = window.location.hostname || '127.0.0.1';
-      const port = window.location.port;
-
-      // Standalone frontend servers (8080, 5500, 3000, 5173) connect to backend on 8000
-      if (port === '8080' || port === '5500' || port === '3000' || port === '5173') {
-        return `${protocol}//${hostname}:8000`;
-      }
-      // Running directly on backend (port 8000)
-      if (port === '8000') {
-        return `${protocol}//${hostname}:8000`;
-      }
-      // Standard HTTP/HTTPS production deployment (port 80, 443, or cloud domain without port)
-      if (!port || port === '80' || port === '443') {
-        return `${protocol}//${hostname}${port ? ':' + port : ''}`;
-      }
-      return `${protocol}//${hostname}:8000`;
+      return 'https://skyresq-backend-lrkd.onrender.com';
     }
     return 'http://127.0.0.1:8000';
   };

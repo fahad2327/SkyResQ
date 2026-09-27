@@ -18,7 +18,7 @@ window.__SKYRESQ_CONFIG__ = {
   BACKEND_URL: "https://skyresq-backend-lrkd.onrender.com",
 
   // Timeout for API requests in milliseconds
-  REQUEST_TIMEOUT_MS: 10000,
+  REQUEST_TIMEOUT_MS: 30000,
 
   // Set to true to print verbose network logs to the browser console
   DEBUG: false
@@ -30,7 +30,7 @@ window.SkyResQConfig = {
    * Returns the currently configured backend URL.
    */
   getBackendUrl() {
-    // 1. Check URL query string
+    // 1. Explicit query string override (?api=http://... or ?api=https://...)
     try {
       const params = new URLSearchParams(window.location.search);
       const queryApi = params.get('api');
@@ -41,46 +41,47 @@ window.SkyResQConfig = {
       }
     } catch (e) {}
 
-    // 2. Check localStorage
+    // 2. Intelligent local & LAN detection
+    // If running on localhost, 127.0.0.1, or local Wi-Fi LAN IP, ALWAYS connect to local FastAPI port 8000!
+    if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname || '';
+      const protocol = window.location.protocol || 'http:';
+
+      const isLocalHost = (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.') ||
+        hostname.endsWith('.local')
+      );
+
+      if (isLocalHost) {
+        // Connect to FastAPI on port 8000 on the same machine/host
+        return `${protocol}//${hostname}:8000`;
+      }
+    }
+
+    // 3. Check localStorage for cloud deployments
     try {
       const stored = localStorage.getItem('skyresq_backend_url');
-      if (stored && stored.trim()) {
+      if (stored && stored.trim() && !stored.includes('localhost') && !stored.includes('127.0.0.1')) {
         return stored.trim().replace(/\/+$/, '');
       }
     } catch (e) {}
 
-    // 3. Check config BACKEND_URL
+    // 4. Default to deployed Render Backend URL on cloud (Vercel)
     if (window.__SKYRESQ_CONFIG__ && window.__SKYRESQ_CONFIG__.BACKEND_URL) {
       const cleaned = window.__SKYRESQ_CONFIG__.BACKEND_URL.trim().replace(/\/+$/, '');
       if (cleaned) return cleaned;
     }
 
-    // 4. Check legacy global
+    // 5. Check legacy global
     if (window.__SKYRESQ_API_URL__) {
       return window.__SKYRESQ_API_URL__.replace(/\/+$/, '');
     }
 
-    // 5. Intelligent host detection
-    const protocol = window.location.protocol || 'http:';
-    const hostname = window.location.hostname || '127.0.0.1';
-    const port = window.location.port;
-
-    // Local dev ports
-    if (port === '8080' || port === '5500' || port === '3000' || port === '5173') {
-      return `${protocol}//${hostname}:8000`;
-    }
-    if (port === '8000') {
-      return `${protocol}//${hostname}:8000`;
-    }
-
-    // Default local fallback
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://127.0.0.1:8000';
-    }
-
-    // Deployed on Vercel without custom URL:
-    // Return empty string to allow relative path rewrites or user prompt
-    return '';
+    return 'https://skyresq-backend-lrkd.onrender.com';
   },
 
   /**

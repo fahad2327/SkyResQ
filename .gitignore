@@ -14,8 +14,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-# Large Model Weights & Training Checkpoints
+# Large Model Weights & Training Checkpoints (Except small yolov8n.pt 6.5MB in ai/models for cloud deploy)
 *.pt
+!ai/models/yolov8n.pt
 *.pth
 *.onnx
 *.weights
