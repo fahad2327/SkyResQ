@@ -6168,16 +6168,32 @@ document.addEventListener('DOMContentLoaded', () => {
   function initBackendUrlConfig() {
     const btnConfigBackend = document.getElementById('btnConfigBackend');
     const btnEditBackendUrlFooter = document.getElementById('btnEditBackendUrlFooter');
+    const btnLoginConfigBackend = document.getElementById('btnLoginConfigBackend');
+    const lblLoginBackendUrl = document.getElementById('lblLoginBackendUrl');
     const footerDocsLink = document.getElementById('footerDocsLink');
 
-    const updateFooterDocsLink = () => {
+    const updateAllBackendLabels = () => {
+      const base = (window.SkyResQConfig && typeof window.SkyResQConfig.getBackendUrl === 'function')
+        ? window.SkyResQConfig.getBackendUrl()
+        : (SkyResQAPI.getBaseUrl ? SkyResQAPI.getBaseUrl() : 'http://127.0.0.1:8000');
+      const displayBase = base || 'http://127.0.0.1:8000';
+
       if (footerDocsLink) {
-        const base = (window.SkyResQConfig && typeof window.SkyResQConfig.getBackendUrl === 'function')
-          ? window.SkyResQConfig.getBackendUrl()
-          : (SkyResQAPI.getBaseUrl ? SkyResQAPI.getBaseUrl() : 'http://127.0.0.1:8000');
-        const displayBase = base || 'http://127.0.0.1:8000';
         footerDocsLink.href = `${displayBase}/docs`;
         footerDocsLink.textContent = `${displayBase} (API Docs)`;
+      }
+
+      if (lblLoginBackendUrl) {
+        if (base && !base.includes('127.0.0.1') && !base.includes('localhost')) {
+          const shortUrl = base.replace(/^https?:\/\//, '');
+          lblLoginBackendUrl.textContent = shortUrl.length > 24 ? shortUrl.substring(0, 21) + '...' : shortUrl;
+          if (btnLoginConfigBackend) {
+            btnLoginConfigBackend.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+            btnLoginConfigBackend.style.color = '#34d399';
+          }
+        } else {
+          lblLoginBackendUrl.textContent = 'Paste Render URL';
+        }
       }
     };
 
@@ -6187,7 +6203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : (SkyResQAPI.getBaseUrl ? SkyResQAPI.getBaseUrl() : '');
       const entered = window.prompt(
         '🚀 Connect SkyResQ to Render / Cloud Backend:\n\n' +
-        'Enter your deployed Render backend URL (e.g. https://skyresq-backend.onrender.com)\n' +
+        'Enter your deployed Render backend URL (e.g. https://skyresq-backend-lrkd.onrender.com)\n' +
         'Or leave empty to reset to local development (http://127.0.0.1:8000):',
         current
       );
@@ -6197,7 +6213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (SkyResQAPI.setBaseUrl) {
           SkyResQAPI.setBaseUrl(entered);
         }
-        updateFooterDocsLink();
+        updateAllBackendLabels();
         if (apiStatusText) apiStatusText.textContent = 'RECONNECTING...';
         if (apiStatusDot) apiStatusDot.className = 'status-dot connecting';
         refreshDashboard();
@@ -6206,6 +6222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnConfigBackend) btnConfigBackend.addEventListener('click', promptBackendUrl);
     if (btnEditBackendUrlFooter) btnEditBackendUrlFooter.addEventListener('click', promptBackendUrl);
+    if (btnLoginConfigBackend) btnLoginConfigBackend.addEventListener('click', promptBackendUrl);
     if (retryConnectBtn) {
       retryConnectBtn.addEventListener('click', () => {
         if (apiStatusText) apiStatusText.textContent = 'RETRYING...';
@@ -6214,7 +6231,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    updateFooterDocsLink();
+    updateAllBackendLabels();
   }
 
   initBackendUrlConfig();
