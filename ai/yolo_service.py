@@ -66,12 +66,12 @@ class YOLOService:
         self._model = None
         self._custom_model = None
         self._model_loaded = False
+        self._ultralytics_checked = False
         self._ultralytics_available = False
-
-        self._check_package_availability()
 
     def _check_package_availability(self) -> bool:
         """Determines if the ultralytics library is available."""
+        self._ultralytics_checked = True
         try:
             import ultralytics
             self._ultralytics_available = True
@@ -82,6 +82,8 @@ class YOLOService:
 
     def is_available(self) -> bool:
         """Returns True if ultralytics package is installed."""
+        if not self._ultralytics_checked:
+            self._check_package_availability()
         return self._ultralytics_available
 
     def is_model_present(self) -> bool:

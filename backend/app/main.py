@@ -54,7 +54,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
 def preload_yolo_model_async():
-    """Warms up YOLO model in background thread to avoid cold inference lag."""
+    """Warms up YOLO model in background after initial health check passes."""
     import threading
     def _warmup():
         try:
@@ -62,7 +62,10 @@ def preload_yolo_model_async():
             yolo_service.load_model()
         except Exception:
             pass
-    threading.Thread(target=_warmup, daemon=True).start()
+    # Delay warmup by 20 seconds so Render's strict 5-second initial health checks pass instantly
+    timer = threading.Timer(20.0, _warmup)
+    timer.daemon = True
+    timer.start()
 
 # Mount media files for serving annotated detection images
 import os
