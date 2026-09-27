@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <filter id="red-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Pulsing outer ring -->
+  <circle cx="24" cy="24" r="18" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.6">
+    <animate attributeName="r" values="12;22;12" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2s" repeatCount="indefinite" />
+  </circle>
+  <!-- Reticle Corners -->
+  <path d="M 12 18 L 12 12 L 18 12" stroke="#ff3366" stroke-width="2" fill="none" />
+  <path d="M 36 18 L 36 12 L 30 12" stroke="#ff3366" stroke-width="2" fill="none" />
+  <path d="M 12 30 L 12 36 L 18 36" stroke="#ff3366" stroke-width="2" fill="none" />
+  <path d="M 36 30 L 36 36 L 30 36" stroke="#ff3366" stroke-width="2" fill="none" />
+  <!-- Human / Victim Silhouette Center -->
+  <circle cx="24" cy="19" r="4" fill="#ff3366" filter="url(#red-glow)" />
+  <path d="M 17 31 C 17 26, 31 26, 31 31 Z" fill="#ff3366" filter="url(#red-glow)" />
+</svg>

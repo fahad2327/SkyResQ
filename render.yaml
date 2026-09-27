@@ -1,0 +1,25 @@
+# ==============================================================================
+# SkyResQ: Render Blueprint Specification
+# Deploys the FastAPI AI Backend on Render Free / Starter Tier
+# ==============================================================================
+services:
+  - type: web
+    name: skyresq-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SKYRESQ_ENV
+        value: production
+      - key: PYTHONPATH
+        value: .
+      - key: SKYRESQ_DATA_DIR
+        value: ./backend/data
+      - key: SKYRESQ_MEDIA_DIR
+        value: ./media

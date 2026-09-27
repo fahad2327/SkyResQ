@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyResQ | AI-Powered Aerial Rescue</title>
+  <meta name="description" content="SkyResQ - AI-Powered Aerial Rescue & Situational Awareness System. Tactical search and rescue drone monitoring dashboard prototype. Real-time telemetry, simulated aerial vision, target detection, and mission mapping.">
+  
+  <!-- Google Fonts: Inter (UI), Orbitron (Tactical Display), JetBrains Mono (Telemetry) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons for tactical drone UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Leaflet CSS for OpenStreetMap Interactive Tactical Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Subtle Tactical Background Grid -->
+  <div class="bg-grid-overlay"></div>
+
+  <div class="app-container">
+
+    <!-- ====================================================================
+         1. SIDEBAR NAVIGATION
+         ==================================================================== -->
+    <aside class="app-sidebar" id="appSidebar">
+      <!-- Brand & Status -->
+      <div class="brand-section">
+        <div class="brand-logo-icon">
+          <i class="fa-solid fa-helicopter"></i>
+        </div>
+        <div class="brand-info">
+          <div class="brand-title">Sky<span>ResQ</span></div>
+          <div class="brand-sub">AI-Powered Aerial Rescue &amp; Situational Awareness System</div>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav" id="sidebarNav">
+        <div class="nav-category-title">Mission Control</div>
+
+        <button class="nav-link active" data-view="dashboard" id="navDashboard">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-link" data-view="live-detection" id="navLiveDetection">
+          <i class="fa-solid fa-crosshairs"></i>
+          <span>Live Detection</span>
+          <span class="nav-badge" id="sidebarBadgeCount">3</span>
+        </button>
+
+        <button class="nav-link" data-view="mission-map" id="navMissionMap">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Mission Map</span>
+        </button>
+
+        <button class="nav-link" data-view="telemetry" id="navTelemetry">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>Drone Telemetry</span>
+        </button>
+
+        <div class="nav-category-title">Operations & Data</div>
+
+        <button class="nav-link" data-view="detection-history" id="navHistory">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Detection History</span>
+        </button>
+
+        <button class="nav-link" data-view="mission-reports" id="navReports">
+          <i class="fa-solid fa-file-waveform"></i>
+          <span>Mission Reports</span>
+        </button>
+
+        <button class="nav-link" data-view="settings" id="navSettings">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Disclaimer -->
+      <div class="sidebar-footer">
+        <div class="sim-disclaimer-box">
+          <div class="sim-disclaimer-header">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Simulated Data</span>
+          </div>
+          <div class="sim-disclaimer-text">
+            Frontend prototype only. Drone sensors, video feeds, and YOLO detections are synthetic mocks.
+          </div>
+        </div>
+        <div class="sidebar-brand-footer">
+          <span>SkyResQ &bull; Aerial Rescue System</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         MAIN CONTENT WRAPPER
+         ==================================================================== -->
+    <main class="main-wrapper">
+
+      <!-- ==================================================================
+           2. TOP TACTICAL STATUS BAR
+           ================================================================== -->
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <div class="mission-tag">
+            <div class="status-dot" id="systemStatusDot"></div>
+            <span class="mission-name">OP LIFELINE // SECTOR 7B</span>
+          </div>
+          <!-- Clearly visible SIMULATION MODE Indicator -->
+          <div class="sim-mode-badge" id="simModeBadge" title="Interactive Simulation Engine Active (Mock SAR Telemetry)">
+            <span class="sim-pulse-dot" id="simPulseDot"></span>
+            <i class="fa-solid fa-flask"></i>
+            <span class="sim-label" id="simModeText">SIMULATION MODE</span>
+          </div>
+          <span class="mode-badge" id="flightModeBadge">AUTO-SEARCH GRID</span>
+        </div>
+
+        <div class="navbar-center">
+          <div class="status-pill">
+            <i class="fa-solid fa-wifi"></i>
+            <span>SIM RF: <b id="topLinkQuality">98.6%</b></span>
+          </div>
+          <div class="status-pill">
+            <i class="fa-solid fa-microchip"></i>
+            <span>SIM LATENCY: <b id="topLatency">22ms</b></span>
+          </div>
+          <div class="status-pill">
+            <i class="fa-solid fa-robot"></i>
+            <span>AI ENGINE: <b>YOLOv8-SAR (MOCK)</b></span>
+          </div>
+        </div>
+
+        <div class="navbar-right">
+          <!-- Simulation Start/Pause Master Control -->
+          <button class="btn btn-sim-toggle" id="btnToggleSimulation" title="Pause or resume simulated drone telemetry updates">
+            <i class="fa-solid fa-pause" id="simToggleIcon"></i>
+            <span id="simToggleText">PAUSE SIM</span>
+          </button>
+
+          <!-- Live Simulation Clock -->
+          <div class="clock-display">
+            <div class="clock-utc" id="liveClockUtc">00:00:00 UTC</div>
+            <div class="clock-sub" id="flightDuration">T+ 00:24:18 SIMULATED</div>
+          </div>
+
+          <!-- Tactical Simulated Actions -->
+          <button class="btn btn-cyan" id="btnTriggerDetection" title="Simulate a new human detection event">
+            <i class="fa-solid fa-person-circle-exclamation"></i>
+            <span>Simulate Victim</span>
+          </button>
+
+          <button class="btn btn-danger" id="btnRTL" title="Simulate Return to Launch command">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+            <span>RTL Command</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ==================================================================
+           VIEW 1: MAIN DASHBOARD VIEW
+           ================================================================== -->
+      <section class="view-container active" id="viewDashboard">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>SkyResQ Mission Operations</h2>
+            <p>AI-Powered Aerial Rescue &amp; Situational Awareness System</p>
+          </div>
+          <div class="hud-watermark" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); background: rgba(0, 240, 255, 0.08); padding: 0.35rem 0.75rem; border: 1px solid var(--border-glow); border-radius: var(--radius-sm);">
+            <i class="fa-solid fa-shield-halved"></i> ACTIVE RECONNAISSANCE // GRID 7B
+          </div>
+        </div>
+        
+        <!-- 8 QUICK TELEMETRY & STATUS CARDS -->
+        <div class="telemetry-grid">
+          
+          <!-- 1. Drone Status Card -->
+          <div class="metric-card accent-emerald">
+            <div class="metric-header">
+              <span class="metric-label">Flight Status</span>
+              <i class="fa-solid fa-shield-halved metric-icon" style="color: var(--accent-emerald);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardDroneStatus">IN FLIGHT</div>
+            </div>
+            <div class="metric-sub">
+              <span>State: <b id="cardFlightState">ARMED (SIM)</b></span>
+              <span style="color: var(--accent-emerald);" id="cardSimActiveStatus">● SIM ACTIVE</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar emerald" id="cardFlightStatusBar" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- 2. Battery Card -->
+          <div class="metric-card accent-amber">
+            <div class="metric-header">
+              <span class="metric-label">Battery Level</span>
+              <i class="fa-solid fa-battery-three-quarters metric-icon" style="color: var(--accent-amber);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardBatteryPercent">84</div>
+              <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-sub">
+              <span id="cardBatteryVolts">22.8V (6S LiPo)</span>
+              <span id="cardBatteryRemaining">~19 min rem</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar amber" id="cardBatteryBar" style="width: 84%;"></div>
+            </div>
+          </div>
+
+          <!-- 3. GPS Position Card -->
+          <div class="metric-card accent-cyan">
+            <div class="metric-header">
+              <span class="metric-label">GPS Coordinates</span>
+              <i class="fa-solid fa-location-crosshairs metric-icon" style="color: var(--accent-cyan);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" style="font-size: 1.05rem;" id="cardGpsLat">34.2512° N</div>
+            </div>
+            <div class="metric-sub">
+              <span id="cardGpsLon">-118.1524° W</span>
+              <span style="color: var(--accent-cyan);" id="cardGpsSats">18 Sats (3D)</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar" id="cardGpsBar" style="width: 90%;"></div>
+            </div>
+          </div>
+
+          <!-- 4. Altitude Card -->
+          <div class="metric-card accent-cyan">
+            <div class="metric-header">
+              <span class="metric-label">Altitude (AGL)</span>
+              <i class="fa-solid fa-up-down metric-icon" style="color: var(--accent-cyan);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardAltitude">48.2</div>
+              <span class="metric-unit">meters</span>
+            </div>
+            <div class="metric-sub">
+              <span>Baro: <b id="cardAltitudeMsl">152m MSL</b></span>
+              <span id="cardClimbRate">+0.2 m/s</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar" id="cardAltitudeBar" style="width: 48%;"></div>
+            </div>
+          </div>
+
+          <!-- 5. Speed Card -->
+          <div class="metric-card accent-cyan">
+            <div class="metric-header">
+              <span class="metric-label">Ground Speed</span>
+              <i class="fa-solid fa-gauge metric-icon" style="color: var(--accent-cyan);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardSpeed">14.2</div>
+              <span class="metric-unit">m/s</span>
+            </div>
+            <div class="metric-sub">
+              <span id="cardSpeedKmh">51.1 km/h</span>
+              <span>HDG: <b id="cardHeadingVal" style="color: var(--accent-cyan);">284° WNW</b></span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar" id="cardSpeedBar" style="width: 62%;"></div>
+            </div>
+          </div>
+
+          <!-- 6. Detected Person Count Card -->
+          <div class="metric-card accent-rose">
+            <div class="metric-header">
+              <span class="metric-label">Persons Detected</span>
+              <i class="fa-solid fa-person-falling-burst metric-icon" style="color: var(--accent-rose);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" style="color: var(--accent-rose);" id="cardPersonCount">3</div>
+              <span class="metric-unit">Victims</span>
+            </div>
+            <div class="metric-sub">
+              <span style="color: var(--accent-rose);" id="cardPersonAlert">1 SOS Urgent</span>
+              <span id="cardPersonSub">2 Monitored</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar rose" id="cardPersonBar" style="width: 75%;"></div>
+            </div>
+          </div>
+
+          <!-- 7. AI Confidence Card -->
+          <div class="metric-card accent-purple">
+            <div class="metric-header">
+              <span class="metric-label">AI Detection Conf.</span>
+              <i class="fa-solid fa-brain metric-icon" style="color: var(--accent-purple);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardAiConfidence">94.8</div>
+              <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-sub">
+              <span>Cam: <b id="cardCameraMode">RGB DAYLIGHT</b></span>
+              <span>30 FPS (MOCK)</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar" id="cardAiConfidenceBar" style="background: var(--accent-purple); width: 95%;"></div>
+            </div>
+          </div>
+
+          <!-- 8. Mission Status Card -->
+          <div class="metric-card accent-emerald">
+            <div class="metric-header">
+              <span class="metric-label">Mission Status</span>
+              <i class="fa-solid fa-route metric-icon" style="color: var(--accent-emerald);"></i>
+            </div>
+            <div class="metric-value-wrap">
+              <div class="metric-value" id="cardMissionProgress">68</div>
+              <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-sub">
+              <span id="cardMissionStatusText">SEARCHING SECTOR 7B</span>
+              <span id="cardGeofenceStatus">Geofence: OK</span>
+            </div>
+            <div class="metric-progress">
+              <div class="metric-progress-bar emerald" id="cardMissionBar" style="width: 68%;"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================
+             PHASE 2 - STEP 2: INTERACTIVE DRONE CONTROL DECK (SIMULATION)
+             ================================================================ -->
+        <div class="drone-control-deck" id="droneControlDeck">
+          <div class="control-deck-header">
+            <div class="deck-title-wrap">
+              <div class="deck-icon-badge">
+                <i class="fa-solid fa-gamepad"></i>
+              </div>
+              <div>
+                <div class="deck-title">Interactive Drone Flight Control Deck</div>
+                <div class="deck-subtitle">Simulated MAVLink Autopilot Command Center &bull; Zero Real Drone Hardware Connected</div>
+              </div>
+            </div>
+
+            <div class="deck-status-badges">
+              <div class="control-state-badge" id="controlStateBadge" title="Current Simulated Drone Flight State">
+                <span class="control-state-dot" id="controlStateDot"></span>
+                <span class="control-state-label">SIM STATE:</span>
+                <b id="controlFlightStateText">IN FLIGHT</b>
+              </div>
+              <div class="home-coord-pill" title="Simulated Home Base Launch Coordinates">
+                <i class="fa-solid fa-house-chimney"></i>
+                <span>LAUNCH WP: <b>34.2500°N, 118.1500°W</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Command Toolbar Buttons Grid -->
+          <div class="control-actions-grid">
+            <!-- 1. ARM / DISARM -->
+            <button class="btn-drone-action btn-action-arm" id="btnControlArm" title="Toggle simulated motor arming safety interlock">
+              <div class="action-icon-wrap">
+                <i class="fa-solid fa-power-off" id="iconControlArm"></i>
+              </div>
+              <div class="action-text-group">
+                <span class="action-name" id="textControlArm">DISARM (SIM)</span>
+                <span class="action-desc" id="descControlArm">Motors Armed &bull; Click to Disarm</span>
+              </div>
+              <span class="action-status-pill armed" id="badgeControlArm">ARMED</span>
+            </button>
+
+            <!-- 2. TAKEOFF -->
+            <button class="btn-drone-action btn-action-takeoff" id="btnControlTakeoff" title="Simulate vertical climb to 48m search altitude">
+              <div class="action-icon-wrap">
+                <i class="fa-solid fa-plane-departure"></i>
+              </div>
+              <div class="action-text-group">
+                <span class="action-name">TAKEOFF</span>
+                <span class="action-desc">Climb to 48m Grid Altitude</span>
+              </div>
+              <span class="action-shortcut">CMD 01</span>
+            </button>
+
+            <!-- 3. HOLD POSITION (LOITER) -->
+            <button class="btn-drone-action btn-action-hold" id="btnControlHold" title="Hold current coordinates and loiter in place">
+              <div class="action-icon-wrap">
+                <i class="fa-solid fa-anchor"></i>
+              </div>
+              <div class="action-text-group">
+                <span class="action-name">HOLD POSITION</span>
+                <span class="action-desc">Hover &amp; Freeze Search Grid</span>
+              </div>
+              <span class="action-shortcut">CMD 02</span>
+            </button>
+
+            <!-- 4. LAND -->
+            <button class="btn-drone-action btn-action-land" id="btnControlLand" title="Simulate autonomous descent and touchdown">
+              <div class="action-icon-wrap">
+                <i class="fa-solid fa-plane-arrival"></i>
+              </div>
+              <div class="action-text-group">
+                <span class="action-name">LAND</span>
+                <span class="action-desc">Autonomous Touchdown Descent</span>
+              </div>
+              <span class="action-shortcut">CMD 03</span>
+            </button>
+
+            <!-- 5. RETURN TO LAUNCH (RTL) -->
+            <button class="btn-drone-action btn-action-rtl" id="btnControlRtl" title="Autonomous flight navigation back to Launch Point">
+              <div class="action-icon-wrap">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </div>
+              <div class="action-text-group">
+                <span class="action-name">RETURN TO LAUNCH</span>
+                <span class="action-desc">Fly to Home WP (34.2500°N)</span>
+              </div>
+              <span class="action-shortcut">RTL FAILSAFE</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Safety Advisory Bar -->
+          <div class="safety-advisory-bar" id="controlSafetyAdvisory">
+            <div class="advisory-icon" id="advisoryIcon">
+              <i class="fa-solid fa-shield-check"></i>
+            </div>
+            <div class="advisory-content">
+              <span class="advisory-label" id="advisoryLabel">FLIGHT SAFETY ADVISORY:</span>
+              <span class="advisory-message" id="advisoryMessage">System nominal. Autopilot actively executing lawnmower grid search at 48m AGL. All simulated flight controls ready.</span>
+            </div>
+            <div class="advisory-tag">SIMULATION PROTOCOL</div>
+          </div>
+        </div>
+
+        <!-- ================================================================
+             OPERATION ROW 1: SIMULATED CAMERA FEED & AI DETECTION PANEL
+             ================================================================ -->
+        <div class="operation-row">
+          
+          <!-- Large Simulated Camera-Feed Area -->
+          <div class="feed-container">
+            <div class="feed-header">
+              <div class="feed-title">
+                <i class="fa-solid fa-video"></i>
+                <span>GIMBAL EO/IR FEED // 4K SIMULATION</span>
+              </div>
+
+              <!-- Camera Vision Modes -->
+              <div class="feed-mode-selector">
+                <button class="mode-btn active" data-mode="rgb" id="modeRgb">RGB DAYLIGHT</button>
+                <button class="mode-btn" data-mode="thermal" id="modeThermal">FLIR THERMAL</button>
+                <button class="mode-btn" data-mode="nvg" id="modeNvg">NIGHT VISION</button>
+              </div>
+
+              <div class="rec-indicator">
+                <span class="rec-dot"></span>
+                <span>REC // LIVE STREAM</span>
+              </div>
+            </div>
+
+            <!-- Canvas Viewport with HUD Overlays -->
+            <div class="feed-viewport" id="feedViewport">
+              <canvas id="cameraCanvas" class="camera-canvas"></canvas>
+              
+              <!-- CRT Scanline Effect -->
+              <div class="hud-scanlines"></div>
+
+              <!-- Tactical HUD Overlay -->
+              <div class="hud-overlay">
+                <!-- Top HUD Telemetry Stamp -->
+                <div class="hud-top-bar">
+                  <div>CAM PITCH: <span id="hudPitch">-28.4°</span> | ROLL: <span id="hudRoll">+1.2°</span></div>
+                  <div>ZOOM: <span id="hudZoom">2.4x</span> | FOV: 64°</div>
+                  <div>BEARING: <span id="hudBearing">284° WNW</span></div>
+                </div>
+
+                <!-- Center Crosshair & Reticle -->
+                <div class="hud-center-crosshair">
+                  <div class="hud-reticle-circle"></div>
+                  <div class="hud-reticle-line-h"></div>
+                  <div class="hud-reticle-line-v"></div>
+                  <div class="hud-reticle-center"></div>
+                </div>
+
+                <!-- Bottom HUD Coordinates & Warning -->
+                <div class="hud-bottom-bar">
+                  <div>
+                    TARGET LOCK: <span style="color: var(--accent-emerald);">ACQUIRED</span><br>
+                    GPS: <span id="hudGps">34.0522°N, -118.2437°W</span> | ALT: <span id="hudAlt">48m</span>
+                  </div>
+                  <div class="hud-watermark">
+                    <i class="fa-solid fa-circle-info"></i> SIMULATED AERIAL FOOTAGE & SYNTHETIC BOUNDING BOXES
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feed Footer Controls -->
+            <div class="feed-footer">
+              <div class="feed-controls">
+                <button class="btn btn-dark" id="btnToggleBoxes">
+                  <i class="fa-solid fa-draw-polygon"></i>
+                  <span>Toggle AI Boxes</span>
+                </button>
+                <button class="btn btn-dark" id="btnToggleThermalNoise">
+                  <i class="fa-solid fa-temperature-arrow-up"></i>
+                  <span>Thermal Boost</span>
+                </button>
+                <button class="btn btn-dark" id="btnSnapshot">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Save Snapshot (Sim)</span>
+                </button>
+              </div>
+
+              <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+                FPS: <span id="feedFps" style="color: var(--accent-cyan);">29.9</span> | RESOLUTION: 3840x2160 (MOCK)
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Detection Panel -->
+          <div class="ai-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fa-solid fa-bullseye" style="color: var(--accent-cyan);"></i>
+                <span>Detected Targets</span>
+              </div>
+              <span class="triage-badge triage-red" id="badgeHighRiskCount">1 CRITICAL</span>
+            </div>
+
+            <div class="detection-list" id="detectionList">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================
+             OPERATION ROW 2: LEAFLET MISSION MAP & ALERT STREAM PANEL
+             ================================================================ -->
+        <div class="secondary-row">
+          
+          <!-- Interactive Tactical Mission Map (Leaflet) -->
+          <div class="map-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fa-solid fa-map-location" style="color: var(--accent-cyan);"></i>
+                <span>Tactical Mission Map // OpenStreetMap</span>
+              </div>
+              <div class="map-controls-group" style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <span class="nav-target-badge" id="dashActiveWaypointBadge" title="Current Autopilot Target Waypoint" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); background: rgba(0, 240, 255, 0.1); padding: 0.25rem 0.55rem; border-radius: 4px; border: 1px solid var(--border-glow); display: flex; align-items: center; gap: 0.35rem;">
+                  <i class="fa-solid fa-location-arrow"></i> <span id="dashWpText">WP-01</span>
+                </span>
+                <button class="btn btn-dark active" id="btnToggleDashGrid" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;" title="Toggle Sector 7B Lawnmower Search Grid Overlay">
+                  <i class="fa-solid fa-draw-polygon"></i> Grid
+                </button>
+                <button class="btn btn-dark active" id="btnToggleDashTrail" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;" title="Toggle Flight Breadcrumb Trail">
+                  <i class="fa-solid fa-route"></i> Trail
+                </button>
+                <button class="btn btn-dark" id="btnCenterDrone" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;">
+                  <i class="fa-solid fa-crosshairs"></i> Center
+                </button>
+                <button class="btn btn-dark" id="btnFitGeofence" style="padding: 0.25rem 0.55rem; font-size: 0.72rem;">
+                  <i class="fa-solid fa-expand"></i> Fit
+                </button>
+              </div>
+            </div>
+
+            <div class="map-viewport" id="missionMapContainer"></div>
+          </div>
+
+          <!-- Real-Time Alerts & Events Panel -->
+          <div class="alert-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber);"></i>
+                <span>Alerts & Incident Log</span>
+              </div>
+              <button class="btn btn-dark" id="btnClearAlerts" style="padding: 0.25rem 0.5rem; font-size: 0.68rem;">
+                Clear
+              </button>
+            </div>
+
+            <div class="alert-stream" id="alertStream">
+              <!-- Dynamically populated alerts -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==================================================================
+           VIEW 2: DEDICATED LIVE DETECTION VIEW
+           ================================================================== -->
+      <section class="view-container" id="viewLiveDetection">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Live AI Target Recognition Studio</h2>
+            <p>High-resolution simulated thermal and RGB inspection feed with automated object classifier</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button class="btn btn-cyan" id="btnSimulateVictim" style="padding: 0.4rem 0.85rem; font-size: 0.75rem;">
+              <i class="fa-solid fa-person-burst"></i> Simulate Detection (Demo)
+            </button>
+            <div class="hud-watermark">SYNTHETIC INFERENCE PIPELINE (DEMO)</div>
+          </div>
+        </div>
+
+        <div class="detection-studio-grid" id="detectionStudioWorkspace">
+          <!-- Left: Theater Camera Viewport -->
+          <div class="feed-container" style="height: 640px;">
+            <div class="feed-header">
+              <div class="feed-title">
+                <i class="fa-solid fa-expand" style="color: var(--accent-cyan);"></i>
+                <span>THEATER SURVEILLANCE FEED</span>
+                <span class="sim-pill-badge" id="theaterTargetCount" style="font-size: 0.65rem; background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-glow);">3 DETECTED</span>
+                <span class="sim-pill-badge" style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.12); color: var(--accent-amber); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3);">MOCK SENSOR</span>
+              </div>
+              <div class="feed-mode-selector">
+                <button class="mode-btn active" data-theater-mode="rgb" title="RGB Daylight Optical Feed">RGB</button>
+                <button class="mode-btn" data-theater-mode="thermal" title="FLIR Radiometric Thermal Heatmap">THERMAL</button>
+                <button class="mode-btn" data-theater-mode="nvg" title="Night Vision Image Intensifier">NVG</button>
+              </div>
+            </div>
+            <div class="feed-viewport" style="height: 100%; position: relative;">
+              <canvas id="theaterCanvas" class="camera-canvas"></canvas>
+              <div class="hud-scanlines"></div>
+              <div class="hud-overlay">
+                <div class="hud-top-bar">
+                  <div id="theaterAnalyticsText">ANALYTICS: HUMAN DETECT (YOLOv8) | RES: 3840x2160 (MOCK)</div>
+                  <div id="theaterTrackingText">TRACKING: SCANNING SECTOR 7B</div>
+                </div>
+
+                <!-- Gimbal Tracking Reticle & Target Lock Indicator -->
+                <div class="gimbal-lock-badge" id="gimbalLockHud" style="display: none;">
+                  <span class="gimbal-pulse-dot"></span>
+                  <span id="gimbalLockText">GIMBAL LOCKED: TARGET-01</span>
+                </div>
+
+                <div class="hud-center-crosshair">
+                  <div class="hud-reticle-circle"></div>
+                  <div class="hud-reticle-center"></div>
+                </div>
+
+                <div class="hud-bottom-hint" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.7rem; color: rgba(255,255,255,0.6); background: rgba(0,0,0,0.6); padding: 0.2rem 0.6rem; border-radius: 4px; pointer-events: none;">
+                  <i class="fa-solid fa-hand-pointer"></i> Click any detected target on video feed to inspect &amp; lock gimbal
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Target Inspector & Inference Parameters -->
+          <div class="detection-sidebar">
+            
+            <!-- 1. Interactive Target Inspector & Triage Card -->
+            <div class="target-inspector-card" id="targetInspectorCard">
+              <div class="inspector-card-header">
+                <div class="inspector-target-title">
+                  <i class="fa-solid fa-person-burst" style="color: var(--accent-cyan);"></i>
+                  <span id="inspectorTargetId">TARGET-01</span>
+                </div>
+                <span class="triage-badge triage-red" id="inspectorTriagePill">CRITICAL SOS</span>
+              </div>
+
+              <!-- Quick Target Switcher Strip -->
+              <div class="target-quick-strip-label">
+                <span>ACTIVE DETECTIONS (CLICK TO INSPECT):</span>
+              </div>
+              <div class="target-quick-selector" id="targetQuickSelector">
+                <!-- Dynamically populated target pills -->
+              </div>
+
+              <!-- Target Metrics Grid -->
+              <div class="inspector-metrics-grid">
+                <div class="inspector-metric-box">
+                  <span class="inspector-metric-label">Thermal Reading</span>
+                  <div class="inspector-metric-val" id="inspectorThermalVal" style="color: var(--accent-amber);">37.2°C</div>
+                  <span class="inspector-metric-sub">Body Heat Anomaly</span>
+                </div>
+                <div class="inspector-metric-box">
+                  <span class="inspector-metric-label">AI Confidence</span>
+                  <div class="inspector-metric-val" id="inspectorConfVal" style="color: var(--accent-cyan);">94.8%</div>
+                  <span class="inspector-metric-sub">YOLOv8 Detection</span>
+                </div>
+                <div class="inspector-metric-box">
+                  <span class="inspector-metric-label">GPS Coordinates</span>
+                  <div class="inspector-metric-val" id="inspectorCoordsVal" style="font-size: 0.74rem;">34.2514°N, -118.1522°W</div>
+                  <span class="inspector-metric-sub">Sector 7B Grid</span>
+                </div>
+                <div class="inspector-metric-box">
+                  <span class="inspector-metric-label">Distance from Drone</span>
+                  <div class="inspector-metric-val" id="inspectorDistVal" style="color: var(--accent-emerald);">142m</div>
+                  <span class="inspector-metric-sub">Line-of-Sight Range</span>
+                </div>
+              </div>
+
+              <!-- Target Status & Classification -->
+              <div class="inspector-status-line">
+                <span>STATUS: <b id="inspectorStatusVal">Active (Unverified)</b></span>
+                <span>TIME: <b id="inspectorTimeVal">10:04:12</b></span>
+              </div>
+
+              <!-- Action Toolbar -->
+              <div class="target-action-row">
+                <button class="btn btn-dark" id="btnLockTarget" title="Lock gimbal tracking on this target">
+                  <i class="fa-solid fa-crosshairs" id="iconLockTarget"></i> <span id="textLockTarget">Lock Gimbal</span>
+                </button>
+                <button class="btn btn-dark" id="btnVerifyTriage" title="Confirm survivor and elevate triage">
+                  <i class="fa-solid fa-shield-heart" id="iconVerifyTriage"></i> <span id="textVerifyTriage">Confirm SOS</span>
+                </button>
+                <button class="btn btn-cyan" id="btnDispatchToDetectedTarget" title="Command drone to fly to this target">
+                  <i class="fa-solid fa-plane-departure"></i> <span>Dispatch</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Inference Parameters & Sensitivity Card -->
+            <div class="telemetry-card" style="margin-top: 0.75rem;">
+              <div class="panel-header" style="margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-subtle);">
+                <span class="metric-label" style="font-size: 0.85rem; color: #fff;"><i class="fa-solid fa-sliders" style="color: var(--accent-cyan);"></i> Inference Sensitivity</span>
+                <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent-cyan);">YOLOv8 SIM</span>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <h4>Confidence Threshold</h4>
+                  <p>Filter detections below cutoff (real-time)</p>
+                </div>
+                <div class="setting-control">
+                  <input type="range" min="50" max="95" value="75" id="confThresholdSlider">
+                  <span id="confThresholdVal" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">75%</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <h4>Bounding Box Tagging</h4>
+                  <p>Display target IDs and coordinates on feed</p>
+                </div>
+                <div class="setting-control">
+                  <input type="checkbox" checked id="checkShowLabels" style="accent-color: var(--accent-cyan); width: 18px; height: 18px;">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <h4>Thermal Heatmap Smoothing</h4>
+                  <p>Apply radiometric gradient blur to hotspots</p>
+                </div>
+                <div class="setting-control">
+                  <input type="checkbox" checked id="checkHeatSmoothing" style="accent-color: var(--accent-cyan); width: 18px; height: 18px;">
+                </div>
+              </div>
+
+              <div style="padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-top: 0.5rem;">
+                <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-amber); margin-bottom: 0.2rem;">
+                  <i class="fa-solid fa-circle-exclamation"></i> TACTICAL SAR RECOMMENDATION
+                </div>
+                <p style="font-size: 0.7rem; color: var(--text-secondary); line-height: 1.4;">
+                  Switch to FLIR Thermal mode when searching dense tree cover. Human body heat signatures (~36.5–38°C) contrast sharply against cooler ambient terrain.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 3: EXPANDED MISSION MAP VIEW (PHASE 2 - STEP 3)
+           ================================================================== -->
+      <section class="view-container" id="viewMissionMap">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Interactive Tactical Mission Map &amp; Autonomous Search Grid</h2>
+            <p>Configurable 2D Search Matrix (4×4, 6×6, 8×8) &bull; Multi-Pattern Traversal &bull; Live Target Discovery &bull; Direct POI Dispatch</p>
+          </div>
+          <!-- Mission Map Tactical Toolbar -->
+          <div class="map-toolbar-group" id="missionMapToolbar">
+            <button class="btn btn-dark active" id="btnToggleGridOverlay" title="Toggle tactical search grid overlay">
+              <i class="fa-solid fa-draw-polygon"></i> <span>Search Grid [ON]</span>
+            </button>
+            <button class="btn btn-dark" id="btnClearBreadcrumbs" title="Clear flight path breadcrumb trail">
+              <i class="fa-solid fa-eraser"></i> <span>Clear Trail</span>
+            </button>
+            <button class="btn btn-dark" id="btnCenterMapDrone" title="Center map viewport on drone">
+              <i class="fa-solid fa-crosshairs"></i> <span>Center Drone</span>
+            </button>
+            <button class="btn btn-cyan" id="btnDownloadFlightPath" title="Export simulated GPS track as KML">
+              <i class="fa-solid fa-download"></i> <span>Export KML (Sim)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tactical Mission Map Workspace (Map + Grid Control HUD Sidebar) -->
+        <div class="mission-map-workspace">
+          <!-- Left: Map Container with Floating HUD Overlay -->
+          <div class="map-viewport-wrapper">
+            <div class="full-map-viewport" id="fullMapContainer"></div>
+            <!-- Floating Map Quick Status Overlay -->
+            <div class="map-floating-hud" id="mapFloatingHud">
+              <div class="hud-mode-tag"><i class="fa-solid fa-crosshairs"></i> <span id="mapHudMode">GRID SEARCH: IDLE</span></div>
+              <div class="hud-target-info">ACTIVE CELL: <b id="mapHudTarget">NONE (SELECT PATTERN TO START)</b> &bull; DIST: <b id="mapHudDist">--m</b></div>
+              <div class="hud-instruction"><i class="fa-solid fa-hand-pointer"></i> Click anywhere on map to inspect coordinates &bull; Click cells to inspect status</div>
+            </div>
+          </div>
+
+          <!-- Right: Tactical Search Grid Control Panel & Real-Time Progress -->
+          <aside class="mission-nav-panel">
+            
+            <!-- 1. Search Grid Controller Card -->
+            <div class="grid-controls-card" id="gridControlCard">
+              <div class="panel-header" style="padding-bottom: 0.5rem; margin-bottom: 0.65rem; border-bottom: 1px solid var(--border-subtle);">
+                <div class="panel-title" style="font-size: 0.88rem;">
+                  <i class="fa-solid fa-network-wired" style="color: var(--accent-cyan);"></i>
+                  <span>Autonomous Search Grid Controller</span>
+                </div>
+                <span class="sim-pill-badge" style="font-size: 0.65rem; background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-glow);">SIMULATION</span>
+              </div>
+
+              <!-- Configuration Selectors Grid -->
+              <div class="grid-select-group">
+                <div class="grid-select-item">
+                  <label for="selectGridSize"><i class="fa-solid fa-border-all"></i> Grid Matrix Size</label>
+                  <select class="tactical-select" id="selectGridSize">
+                    <option value="4">4 × 4 (16 Tactical Cells)</option>
+                    <option value="6" selected>6 × 6 (36 Tactical Cells)</option>
+                    <option value="8">8 × 8 (64 Tactical Cells)</option>
+                  </select>
+                </div>
+
+                <div class="grid-select-item">
+                  <label for="selectSearchPattern"><i class="fa-solid fa-route"></i> Search Pattern</label>
+                  <select class="tactical-select" id="selectSearchPattern">
+                    <option value="lawnmower" selected>Lawn Mower (Boustrophedon)</option>
+                    <option value="spiral">Inward Perimeter Spiral</option>
+                    <option value="sector">Sector-by-Sector Quadrants</option>
+                  </select>
+                </div>
+
+                <div class="grid-select-item">
+                  <label for="selectSearchSpeed"><i class="fa-solid fa-gauge-high"></i> Search Speed</label>
+                  <select class="tactical-select" id="selectSearchSpeed">
+                    <option value="slow">Slow (1.5s / ~8 m/s)</option>
+                    <option value="normal" selected>Normal (1.0s / ~14 m/s)</option>
+                    <option value="fast">Fast (0.5s / ~22 m/s)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Action Execution Buttons Toolbar -->
+              <div class="grid-btn-row">
+                <button class="btn btn-cyan" id="btnStartSearch" title="Initiate autonomous grid sweep">
+                  <i class="fa-solid fa-play"></i> <span>Start Search</span>
+                </button>
+                <button class="btn btn-dark" id="btnPauseSearch" title="Pause autonomous search sequence">
+                  <i class="fa-solid fa-pause"></i> <span>Pause</span>
+                </button>
+                <button class="btn btn-dark" id="btnResumeSearch" title="Resume search sequence">
+                  <i class="fa-solid fa-forward"></i> <span>Resume</span>
+                </button>
+                <button class="btn btn-dark" id="btnStopSearch" title="Halt autonomous search">
+                  <i class="fa-solid fa-stop"></i> <span>Stop</span>
+                </button>
+                <button class="btn btn-dark" id="btnResetGrid" title="Reinitialize grid cells and targets">
+                  <i class="fa-solid fa-rotate-left"></i> <span>Reset Grid</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Real-Time Search Progress & Active Cell HUD Card -->
+            <div class="nav-hud-card" id="searchProgressCard">
+              <div class="nav-hud-header">
+                <span class="metric-label"><i class="fa-solid fa-satellite-dish"></i> Search Sweep Status</span>
+                <span class="nav-status-badge" id="searchExecutionBadge">READY</span>
+              </div>
+
+              <div class="nav-target-name-wrap" style="margin-top: 0.35rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div class="nav-target-title" id="searchActiveCellLabel">CURRENT CELL: NONE</div>
+                  <span class="cell-status-tag unsearched" id="searchActiveCellStatePill">UNSEARCHED</span>
+                </div>
+                <div class="nav-target-coords" id="searchActiveCellCoords">Sector 7B Geofence Bounds</div>
+              </div>
+
+              <div class="nav-metrics-grid" style="margin-top: 0.6rem;">
+                <div class="nav-metric-item">
+                  <span class="nav-metric-label">Cells Searched</span>
+                  <div class="nav-metric-value" id="searchCellsDoneVal">0 / 36</div>
+                </div>
+                <div class="nav-metric-item">
+                  <span class="nav-metric-label">Coverage</span>
+                  <div class="nav-metric-value" id="searchPercentVal" style="color: var(--accent-cyan);">0.0%</div>
+                </div>
+                <div class="nav-metric-item">
+                  <span class="nav-metric-label">Remaining</span>
+                  <div class="nav-metric-value" id="searchCellsRemainingVal">36 Cells</div>
+                </div>
+                <div class="nav-metric-item">
+                  <span class="nav-metric-label">Est. Time</span>
+                  <div class="nav-metric-value" id="searchEtaVal">--:--</div>
+                </div>
+              </div>
+
+              <div class="nav-progress-wrap" style="margin-top: 0.6rem;">
+                <div class="nav-progress-label">
+                  <span>Grid Coverage Progress</span>
+                  <b id="searchProgressLabel">0% Complete</b>
+                </div>
+                <div class="metric-progress">
+                  <div class="metric-progress-bar" id="searchProgressBar" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Targets Discovered in Sweep Indicator -->
+              <div class="search-targets-strip" style="margin-top: 0.6rem; display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0.65rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.72rem;">
+                <span style="color: var(--text-secondary);"><i class="fa-solid fa-person-burst" style="color: var(--accent-rose);"></i> Targets Detected:</span>
+                <b id="searchTargetsFoundCount" style="color: var(--accent-rose); font-size: 0.85rem;">0 FOUND</b>
+              </div>
+            </div>
+
+            <!-- 3. Cell State Visual Legend Card -->
+            <div class="grid-legend-card" id="gridLegendCard" style="padding: 0.65rem 0.85rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+              <div class="panel-title" style="font-size: 0.78rem; margin-bottom: 0.45rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Cell Matrix Visual States</span>
+              </div>
+              <div class="cell-legend-grid">
+                <div class="cell-legend-item">
+                  <span class="cell-legend-dot unsearched"></span>
+                  <span>Unsearched</span>
+                </div>
+                <div class="cell-legend-item">
+                  <span class="cell-legend-dot searching"></span>
+                  <span>Searching (Active)</span>
+                </div>
+                <div class="cell-legend-item">
+                  <span class="cell-legend-dot searched"></span>
+                  <span>Searched</span>
+                </div>
+                <div class="cell-legend-item">
+                  <span class="cell-legend-dot detected"></span>
+                  <span>Target Detected</span>
+                </div>
+                <div class="cell-legend-item">
+                  <span class="cell-legend-dot skipped"></span>
+                  <span>Skipped</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Direct Coordinate Dispatch / Click Inspector Box -->
+            <div class="dispatch-control-box" id="dispatchControlBox">
+              <div class="dispatch-header">
+                <i class="fa-solid fa-location-crosshairs" style="color: var(--accent-cyan);"></i>
+                <span>Tactical Coordinate Inspector &amp; POI</span>
+              </div>
+              <div class="dispatch-body">
+                <p id="dispatchStatusText">Click any location on the map to inspect coordinates, distance, and elevation, or command direct drone dispatch.</p>
+                <div class="dispatch-action-row">
+                  <button class="btn btn-dark" id="btnResumeGrid" style="display: none;">
+                    <i class="fa-solid fa-rotate-left"></i> Resume Autonomous Grid
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Geofence Containment Radar Box -->
+            <div class="geofence-radar-card" id="geofenceRadarCard">
+              <div class="geofence-radar-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-shield-halved" style="color: var(--accent-amber);"></i>
+                  <span class="metric-label" style="color: var(--text-primary);">Geofence Safety Perimeter</span>
+                </div>
+                <span class="geofence-status-pill ok" id="geofenceStatusPill">CONTAINED</span>
+              </div>
+              <div class="geofence-stats-row">
+                <div>LAUNCH DIST: <b id="geofenceLaunchDist" style="color: var(--accent-cyan);">380m</b></div>
+                <div>RADIUS: <b id="geofenceLimitVal">1,200m</b></div>
+                <div>CLEARANCE: <b id="geofenceClearanceVal" style="color: var(--accent-emerald);">820m</b></div>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 4: DETAILED DRONE TELEMETRY VIEW
+           ================================================================== -->
+      <section class="view-container" id="viewTelemetry">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Avionics & Drone Telemetry Deck</h2>
+            <p>Flight controller internal metrics, IMU orientation, ESC telemetry and propulsion diagnostics</p>
+          </div>
+          <span class="mode-badge">MAVLINK SIMULATOR // 50 Hz</span>
+        </div>
+
+        <div class="telemetry-deck">
+          
+          <!-- Artificial Horizon / Attitude Director Indicator -->
+          <div class="telemetry-card">
+            <h3 style="font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-compass" style="color: var(--accent-cyan);"></i>
+              <span>Attitude Director (Artificial Horizon)</span>
+            </h3>
+            
+            <div class="horizon-widget">
+              <div class="horizon-line" id="horizonLine"></div>
+              <div class="horizon-reticle"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; font-family: var(--font-mono); font-size: 0.8rem;">
+              <div>PITCH: <b id="telemetryPitch" style="color: var(--accent-cyan);">-28.4°</b></div>
+              <div>ROLL: <b id="telemetryRoll" style="color: var(--accent-cyan);">+1.2°</b></div>
+              <div>YAW / HDG: <b id="telemetryYaw" style="color: var(--accent-cyan);">284°</b></div>
+            </div>
+          </div>
+
+          <!-- ESC & Quad Motor RPMs -->
+          <div class="telemetry-card">
+            <h3 style="font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-fan" style="color: var(--accent-cyan);"></i>
+              <span>Motor Propulsion & ESC Output</span>
+            </h3>
+
+            <div class="motor-bars-grid">
+              <div class="motor-col">
+                <div class="motor-level-bg">
+                  <div class="motor-level-fill" id="motorFill1" style="height: 72%;"></div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 0.7rem;">M1 (FL)</span>
+                <b id="motorRpm1" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">4,820 RPM</b>
+              </div>
+
+              <div class="motor-col">
+                <div class="motor-level-bg">
+                  <div class="motor-level-fill" id="motorFill2" style="height: 74%;"></div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 0.7rem;">M2 (FR)</span>
+                <b id="motorRpm2" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">4,880 RPM</b>
+              </div>
+
+              <div class="motor-col">
+                <div class="motor-level-bg">
+                  <div class="motor-level-fill" id="motorFill3" style="height: 71%;"></div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 0.7rem;">M3 (RR)</span>
+                <b id="motorRpm3" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">4,790 RPM</b>
+              </div>
+
+              <div class="motor-col">
+                <div class="motor-level-bg">
+                  <div class="motor-level-fill" id="motorFill4" style="height: 73%;"></div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 0.7rem;">M4 (RL)</span>
+                <b id="motorRpm4" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">4,840 RPM</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Battery Cell Voltage Monitoring -->
+          <div class="telemetry-card">
+            <h3 style="font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-car-battery" style="color: var(--accent-amber);"></i>
+              <span>6S LiPo Cell Voltages & BMS</span>
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.78rem;">
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 1: <b style="color: var(--accent-emerald);">3.80V</b></div>
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 2: <b style="color: var(--accent-emerald);">3.81V</b></div>
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 3: <b style="color: var(--accent-emerald);">3.79V</b></div>
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 4: <b style="color: var(--accent-emerald);">3.80V</b></div>
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 5: <b style="color: var(--accent-emerald);">3.80V</b></div>
+              <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">CELL 6: <b style="color: var(--accent-emerald);">3.80V</b></div>
+            </div>
+          </div>
+
+          <!-- Communication Link & Packet Telemetry -->
+          <div class="telemetry-card">
+            <h3 style="font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-tower-broadcast" style="color: var(--accent-cyan);"></i>
+              <span>RF Link & Telemetry Health</span>
+            </h3>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem; font-family: var(--font-mono); font-size: 0.78rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Signal Strength (RSSI):</span>
+                <b style="color: var(--accent-emerald);">-62 dBm (Excellent)</b>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Packet Loss:</span>
+                <b style="color: var(--accent-emerald);">0.02%</b>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Telemetry Frequency:</span>
+                <b>50 Hz MAVLink v2</b>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Video Stream Bitrate:</span>
+                <b style="color: var(--accent-cyan);">14.8 Mbps H.265</b>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 5: DETECTION HISTORY VIEW
+           ================================================================== -->
+      <section class="view-container" id="viewDetectionHistory">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Target Detection Log & History</h2>
+            <p>Audit trail of all computer-vision human detections identified during the current mission</p>
+          </div>
+          <button class="btn btn-cyan" id="btnExportCsv">
+            <i class="fa-solid fa-file-csv"></i> Export Incident CSV (Sim)
+          </button>
+        </div>
+
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Target ID</th>
+                <th>Timestamp</th>
+                <th>GPS Latitude</th>
+                <th>GPS Longitude</th>
+                <th>AI Confidence</th>
+                <th>Triage Priority</th>
+                <th>Thermal Anomaly</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Populated by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 6: MISSION REPORTS VIEW
+           ================================================================== -->
+      <section class="view-container" id="viewMissionReports">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Mission Analytics & After-Action Report</h2>
+            <p>Automated mission evaluation metrics, search area coverage, and flight statistics</p>
+          </div>
+          <button class="btn btn-cyan" id="btnGenerateReport">
+            <i class="fa-solid fa-print"></i> Generate PDF Summary (Mock)
+          </button>
+        </div>
+
+        <div class="reports-summary-grid">
+          <div class="report-stat-box">
+            <span class="metric-label">Area Scanned</span>
+            <div class="report-stat-val">4.8 <span style="font-size: 1rem; color: var(--text-muted);">km²</span></div>
+            <span style="font-size: 0.72rem; color: var(--accent-emerald);">100% of Sector 7B</span>
+          </div>
+
+          <div class="report-stat-box">
+            <span class="metric-label">Total Flight Time</span>
+            <div class="report-stat-val" id="reportFlightTime">00:24:18</div>
+            <span style="font-size: 0.72rem; color: var(--text-secondary);">Avg Speed: 14.2 m/s</span>
+          </div>
+
+          <div class="report-stat-box">
+            <span class="metric-label">Victims Located</span>
+            <div class="report-stat-val" style="color: var(--accent-rose);" id="reportVictimCount">3</div>
+            <span style="font-size: 0.72rem; color: var(--accent-rose);">1 SOS Beacon Verified</span>
+          </div>
+
+          <div class="report-stat-box">
+            <span class="metric-label">Search Efficiency</span>
+            <div class="report-stat-val" style="color: var(--accent-purple);">96.4%</div>
+            <span style="font-size: 0.72rem; color: var(--text-secondary);">No duplicate tracks</span>
+          </div>
+        </div>
+
+        <div class="telemetry-card" style="margin-top: 1rem;">
+          <h3 style="font-size: 0.95rem; color: #fff;">Search Pattern Summary</h3>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6;">
+            Drone unit <b>SkyResQ-01</b> executed a parallel creeping-line search pattern over mountainous terrain in Sector 7B. 
+            Thermal imaging identified body heat signatures under partial foliage at waypoint WP-03. All coordinates have been logged 
+            and forwarded to ground rescue teams.
+          </p>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           VIEW 7: SETTINGS & SIMULATION CONTROLS
+           ================================================================== -->
+      <section class="view-container" id="viewSettings">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h2>Simulation & Dashboard Settings</h2>
+            <p>Tune simulation parameters, mock data refresh rates, and visual HUD preferences</p>
+          </div>
+          <button class="btn btn-dark" id="btnResetSimulation">
+            <i class="fa-solid fa-rotate-left"></i> Reset Simulation
+          </button>
+        </div>
+
+        <div class="settings-panel">
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Simulation Engine Active</h4>
+              <p>Start or pause simulated telemetry updates, coordinate movement, and sensor oscillations</p>
+            </div>
+            <div class="setting-control">
+              <input type="checkbox" id="checkSimulationEnabled" checked style="accent-color: var(--accent-cyan); width: 18px; height: 18px;">
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Simulation Speed Multiplier</h4>
+              <p>Accelerate telemetry oscillation and search flight pace</p>
+            </div>
+            <div class="setting-control">
+              <select id="simSpeedSelect">
+                <option value="1">1x (Real-time pace)</option>
+                <option value="2">2x (Accelerated demo)</option>
+                <option value="5">5x (Rapid testing)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Audio Tone Simulation</h4>
+              <p>Play simulated synthesizer beep when victim is identified</p>
+            </div>
+            <div class="setting-control">
+              <input type="checkbox" id="checkAudioSim" checked style="accent-color: var(--accent-cyan); width: 18px; height: 18px;">
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Geofence Search Radius</h4>
+              <p>Radius of simulated rescue sector geofence (meters)</p>
+            </div>
+            <div class="setting-control">
+              <input type="range" min="500" max="3000" step="100" value="1200" id="geofenceRadiusSlider">
+              <span id="geofenceRadiusVal" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">1,200m</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Mock YOLO Model Resolution</h4>
+              <p>Simulated detection matrix grid density</p>
+            </div>
+            <div class="setting-control">
+              <select id="yoloResolutionSelect">
+                <option value="640">640x640 (Standard SAR)</option>
+                <option value="1280" selected>1280x1280 (High Accuracy)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+ 
+      <!-- Tactical Dashboard Footer -->
+      <footer class="dashboard-footer">
+        <div class="footer-brand-line">
+          <span class="footer-title">SkyResQ</span>
+          <span class="footer-bullet">//</span>
+          <span class="footer-tagline">AI-Powered Aerial Rescue &amp; Situational Awareness System</span>
+        </div>
+        <div class="footer-meta-line">
+          <span>Mission Operations &bull; Sector 7B Reconnaissance &bull; Tactical Drone Monitoring</span>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- Leaflet Interactive Maps JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Core Application Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>

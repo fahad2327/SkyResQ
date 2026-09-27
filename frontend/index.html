@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #060913 !important; color: #f1f5f9;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>SkyResQ - Autonomous Aerial Search &amp; Rescue Mission Control</title>
+  <meta name="description" content="SkyResQ Autonomous AI-Powered Aerial Search &amp; Rescue Mission Control &amp; Situational Awareness System. Live connection to FastAPI backend.">
+
+  <!-- Critical Theme Guard: Prevent any white flash on initial paint -->
+  <style>
+    html, body {
+      background-color: #060913 !important;
+      color: #f1f5f9 !important;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
+  <!-- Google Fonts: Inter (UI), Orbitron (Tactical Headings), JetBrains Mono (Avionics Data) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Leaflet CSS for Tactical GPS OpenStreetMap / Dark Matter Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Tactical Dark Mode Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=9.0">
+</head>
+<body style="background-color: #060913 !important; color: #f1f5f9;">
+
+  <!-- ====================================================================
+       TACTICAL RESCUE DRONE BOOT & DEPLOYMENT OVERLAY
+       ==================================================================== -->
+  <div class="tactical-boot-overlay" id="tacticalBootSplash">
+    <div class="boot-radar-circle">
+      <div class="radar-beam"></div>
+      <div class="radar-crosshair-h"></div>
+      <div class="radar-crosshair-v"></div>
+      <div class="radar-pulse-ring ring-1"></div>
+      <div class="radar-pulse-ring ring-2"></div>
+      <div class="radar-pulse-ring ring-3"></div>
+    </div>
+
+    <div class="boot-content">
+      <!-- Holographic Tactical Drone Deployment Stage -->
+      <div class="boot-drone-stage">
+        <div class="drone-hud-reticle"></div>
+        <span class="drone-hud-bracket tl">[DRONE-ALPHA-1]</span>
+        <span class="drone-hud-bracket tr">[120m AGL]</span>
+        <span class="drone-hud-bracket bl">[NAVIC: LOCKED]</span>
+        <span class="drone-hud-bracket br">[YOLOv8: ONLINE]</span>
+
+        <svg id="bootDroneSvg" class="boot-drone-svg-container" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Carbon Fiber Quadcopter Frame Arms -->
+          <line x1="45" y1="45" x2="195" y2="155" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+          <line x1="45" y1="45" x2="195" y2="155" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
+          <line x1="195" y1="45" x2="45" y2="155" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+          <line x1="195" y1="45" x2="45" y2="155" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
+
+          <!-- Motor Pods -->
+          <circle cx="45" cy="45" r="14" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+          <circle cx="195" cy="45" r="14" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+          <circle cx="45" cy="155" r="14" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+          <circle cx="195" cy="155" r="14" fill="#0f172a" stroke="#00f0ff" stroke-width="2"/>
+
+          <!-- High-Speed Spinning Rotor Blurs -->
+          <g class="drone-spinning-rotor" style="transform-origin: 45px 45px;">
+            <line x1="15" y1="45" x2="75" y2="45" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+            <circle cx="45" cy="45" r="30" stroke="#00f0ff" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+          </g>
+          <g class="drone-spinning-rotor reverse" style="transform-origin: 195px 45px;">
+            <line x1="165" y1="45" x2="225" y2="45" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+            <circle cx="195" cy="45" r="30" stroke="#00f0ff" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+          </g>
+          <g class="drone-spinning-rotor reverse" style="transform-origin: 45px 155px;">
+            <line x1="15" y1="155" x2="75" y2="155" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+            <circle cx="45" cy="155" r="30" stroke="#00f0ff" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+          </g>
+          <g class="drone-spinning-rotor" style="transform-origin: 195px 155px;">
+            <line x1="165" y1="155" x2="225" y2="155" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+            <circle cx="195" cy="155" r="30" stroke="#00f0ff" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+          </g>
+
+          <!-- Central Drone Aerodynamic Fuselage -->
+          <polygon points="120,58 150,88 150,120 120,144 90,120 90,88" fill="#0b1329" stroke="#00f0ff" stroke-width="2.5"/>
+          <ellipse cx="120" cy="100" rx="18" ry="22" fill="url(#droneCanopyGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+
+          <!-- Front LED Navigation Beacons -->
+          <circle cx="110" cy="66" r="3.5" fill="#10b981"/>
+          <circle cx="130" cy="66" r="3.5" fill="#10b981"/>
+
+          <!-- Dual Sensor Gimbal (4K RGB Optical + FLIR Thermal) -->
+          <circle cx="120" cy="124" r="11" fill="#030712" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="116" cy="124" r="4" fill="#00f0ff"/>
+          <circle cx="124" cy="124" r="3.5" fill="#ef4444"/>
+
+          <!-- Directional Heading Arrow -->
+          <polygon points="120,44 127,56 113,56" fill="#00f0ff"/>
+
+          <defs>
+            <radialGradient id="droneCanopyGrad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#0284c7" stop-opacity="0.25"/>
+            </radialGradient>
+          </defs>
+        </svg>
+
+        <div class="drone-lidar-beam"></div>
+        <!-- Orbiting satellite particles -->
+        <div class="drone-orbit-particle"></div>
+        <div class="drone-orbit-particle orbit-2"></div>
+        <!-- Signal ping rings -->
+        <div class="drone-signal-ping"></div>
+        <div class="drone-signal-ping"></div>
+        <div class="drone-signal-ping"></div>
+      </div>
+
+      <div class="boot-title-group">
+        <div class="boot-command-tag">
+          <span class="flag-stripe saffron"></span>
+          <span class="flag-stripe white"></span>
+          <span class="flag-stripe green"></span>
+          <span>NATIONAL DISASTER RESPONSE FORCE &bull; AERIAL SAR COMMAND DIVISION</span>
+        </div>
+        <h1 class="boot-main-title">Sky<span>ResQ</span></h1>
+        <p class="boot-subtitle">AUTONOMOUS SEARCH &amp; RESCUE AERIAL SYSTEM</p>
+      </div>
+
+      <div class="boot-progress-box">
+        <div class="boot-status-text" id="bootStatusText">INITIALIZING SYSTEM TELEMETRY...</div>
+        <div class="boot-progress-bar">
+          <div class="boot-progress-fill" id="bootProgressFill"></div>
+        </div>
+        <div class="boot-telemetry-tags">
+          <span><i class="fa-solid fa-helicopter"></i> ROTORS: 8400 RPM</span>
+          <span><i class="fa-solid fa-satellite"></i> NAVIC: LOCKED (18 SATS)</span>
+          <span><i class="fa-solid fa-microchip"></i> YOLOv8: ARMED</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn-skip-boot" id="btnSkipBoot" onclick="var s=document.getElementById('tacticalBootSplash');if(s){s.style.opacity='0';s.style.pointerEvents='none';setTimeout(function(){s.style.display='none';},350);}">
+        <span>ENTER MISSION CONTROL</span>
+        <i class="fa-solid fa-angles-right"></i>
+      </button>
+    </div>
+  </div>
+  <script>
+    // Fail-safe auto-dismiss: ensures boot animation never traps user under any circumstance
+    setTimeout(function() {
+      var s = document.getElementById('tacticalBootSplash');
+      if (s && s.style.display !== 'none') {
+        s.style.transition = 'opacity 0.4s ease';
+        s.style.opacity = '0';
+        s.style.pointerEvents = 'none';
+        setTimeout(function() { s.style.display = 'none'; }, 400);
+      }
+    }, 2800);
+  </script>
+
+  <!-- ====================================================================
+       TACTICAL OPERATOR LOGIN GATEWAY (RESTRICTED ACCESS PORTAL)
+       ==================================================================== -->
+  <div class="login-gateway-backdrop" id="operatorLoginGateway">
+    <div class="login-gateway-card">
+      <div class="gateway-top-bar">
+        <span class="sys-code"><i class="fa-solid fa-shield-halved"></i> SKYRESQ TACTICAL AUTH // PROTOCOL SECURE</span>
+        <span class="sys-clearance">CLEARANCE: OPERATOR-LEVEL-4</span>
+      </div>
+
+      <div class="gateway-header">
+        <div class="gateway-logo-container">
+          <img id="loginGatewayLogo" src="assets/logos/skyresq_logo.png" alt="SkyResQ Logo" class="gateway-emblem-img">
+        </div>
+        <div class="gateway-command-badge">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>NATIONAL DISASTER RESPONSE FORCE &bull; TACTICAL MISSION CONTROL</span>
+        </div>
+        <h2 class="gateway-title">Sky<span>ResQ</span></h2>
+        <p class="gateway-subtitle">Autonomous Aerial Search &amp; Rescue Command Network</p>
+        <div class="gateway-status-pill">
+          <span class="status-pulse-dot"></span>
+          <span id="gatewayStatusTitle">OPERATOR AUTHENTICATION GATEWAY</span>
+        </div>
+      </div>
+
+      <!-- Gateway Mode Tab Navigation: Sign In vs Sign Up -->
+      <div class="gateway-tab-nav">
+        <button type="button" class="gateway-tab-btn active" id="tabBtnSignIn">
+          <i class="fa-solid fa-right-to-bracket"></i> <span>Operator Login</span>
+        </button>
+        <button type="button" class="gateway-tab-btn" id="tabBtnSignUp">
+          <i class="fa-solid fa-user-plus"></i> <span>Create Account</span>
+        </button>
+      </div>
+
+      <!-- ==============================================================
+           PANEL 1: SIGN IN (CALLSIGN/EMAIL + PASSWORD) - FRICTIONLESS LOGIN
+           ============================================================== -->
+      <div class="gateway-panel active" id="panelSignIn">
+        <form id="operatorLoginForm" class="gateway-form" autocomplete="off">
+          <div class="form-group">
+            <label for="loginEmail"><i class="fa-solid fa-user-astronaut"></i> Username, Email or Mobile Number</label>
+            <div class="input-wrapper">
+              <input type="text" id="loginEmail" placeholder="e.g. PILOT-ALPHA, pilot@skyresq.org or +91 9876543210" required autocomplete="username">
+              <i class="fa-solid fa-at input-icon"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPasscode"><i class="fa-solid fa-key"></i> Security Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="loginPasscode" placeholder="Enter your registered password" required autocomplete="current-password">
+              <button type="button" class="btn-toggle-pw" id="btnTogglePassword" title="Show / Hide Passcode">
+                <i class="fa-solid fa-eye" id="iconPwToggle"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row-remember">
+            <label class="remember-label">
+              <input type="checkbox" id="checkRememberSession" checked>
+              <span>Remember this terminal</span>
+            </label>
+            <button type="button" class="link-btn btn-forgot-pw" id="btnOpenForgotPwModal">
+              <i class="fa-solid fa-circle-question"></i> Forgot Password?
+            </button>
+          </div>
+
+          <!-- Alert Banner for Invalid Credentials -->
+          <div class="gateway-alert error" id="loginAlertBanner" style="display: none;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="loginAlertText">ACCESS DENIED: Invalid credentials.</span>
+          </div>
+
+          <button type="submit" class="btn-gateway-submit" id="btnLoginSubmit">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span id="btnLoginSubmitText">SIGN IN TO MISSION CONTROL</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- ==============================================================
+           PANEL 2: SIGN UP (CREATE OPERATOR ACCOUNT)
+           ============================================================== -->
+      <div class="gateway-panel" id="panelSignUp" style="display: none;">
+        
+        <!-- SIGN UP Form -->
+        <div id="stepSignUpFormView">
+          <form id="operatorSignUpForm" class="gateway-form" autocomplete="off">
+            <div class="form-group">
+              <label for="signupFullName"><i class="fa-solid fa-user"></i> Full Name / Call-Sign</label>
+              <div class="input-wrapper">
+                <input type="text" id="signupFullName" placeholder="e.g. Rahul Sharma or PILOT-RAHUL" required>
+                <i class="fa-solid fa-signature input-icon"></i>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="signupUsername"><i class="fa-solid fa-id-badge"></i> Username (for Login)</label>
+              <div class="input-wrapper">
+                <input type="text" id="signupUsername" placeholder="e.g. pilot_rahul (no spaces)" required autocomplete="username">
+                <i class="fa-solid fa-at input-icon"></i>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="signupEmail"><i class="fa-solid fa-envelope"></i> Email Address</label>
+              <div class="input-wrapper">
+                <input type="email" id="signupEmail" placeholder="e.g. rahul@skyresq.org" required>
+                <i class="fa-solid fa-at input-icon"></i>
+              </div>
+            </div>
+
+
+
+            <div class="form-group">
+              <label for="signupRole"><i class="fa-solid fa-user-gear"></i> Operational Role</label>
+              <div class="input-wrapper">
+                <select id="signupRole" class="gateway-select">
+                  <option value="Tactical UAV Pilot">Tactical UAV Pilot (Avionics &amp; Flight Navigation)</option>
+                  <option value="Thermal &amp; Optical Vision Specialist">Thermal &amp; Optical Vision Specialist</option>
+                  <option value="Ground Search &amp; Rescue Lead">Ground Search &amp; Rescue Lead</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="signupPassword"><i class="fa-solid fa-lock"></i> Create Security Password</label>
+              <div class="input-wrapper">
+                <input type="password" id="signupPassword" placeholder="Min 4 characters" required>
+                <button type="button" class="btn-toggle-pw" id="btnToggleSignupPw" title="Show / Hide Password">
+                  <i class="fa-solid fa-eye" id="iconSignupPwToggle"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="signupConfirmPassword"><i class="fa-solid fa-check-double"></i> Confirm Password</label>
+              <div class="input-wrapper">
+                <input type="password" id="signupConfirmPassword" placeholder="Re-enter password to confirm" required>
+              </div>
+            </div>
+
+            <!-- Alert Banner for Registration -->
+            <div class="gateway-alert" id="signupAlertBanner" style="display: none;">
+              <i class="fa-solid fa-circle-info" id="signupAlertIcon"></i>
+              <span id="signupAlertText"></span>
+            </div>
+
+            <button type="submit" class="btn-gateway-submit btn-signup-submit" id="btnSignUpSubmit">
+              <i class="fa-solid fa-user-check"></i>
+              <span>CREATE ACCOUNT &amp; ACCESS MISSION CONTROL</span>
+            </button>
+
+            <div class="gateway-switch-link">
+              <span>Already have an account? <button type="button" class="link-btn" id="btnSwitchToSignIn">Sign In here</button></span>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="gateway-footer">
+        <span><i class="fa-solid fa-lock"></i> 256-Bit Encrypted Terminal &bull; National SAR Operations Division</span>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="app-container">
+
+    <!-- ====================================================================
+         TOP HEADER & QUICK CONTROLS
+         ==================================================================== -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo-container" id="hdrBrandLogo">
+          <img id="hdrAppLogo" src="assets/logos/skyresq_logo.png" alt="SkyResQ Logo" class="brand-logo-img">
+        </div>
+        <div class="brand-titles">
+          <div class="brand-title-row">
+            <h1 class="brand-title">Sky<span>ResQ</span></h1>
+            <span class="tactical-national-tag"><i class="fa-solid fa-shield-halved"></i> TACTICAL SAR</span>
+          </div>
+          <span class="brand-subtitle">Autonomous Drone Aerial Search &amp; Rescue System</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Dedicated SQLite Database Status Button -->
+        <button type="button" class="btn-tactical-connector" id="btnOpenDatabaseModal" title="View SQLite Database telemetry and export mission records" style="border-color: rgba(59, 130, 246, 0.5); color: #60a5fa;">
+          <i class="fa-solid fa-database"></i>
+          <span id="hdrDatabaseText">DB: SQLITE (0)</span>
+        </button>
+
+        <!-- Official SAR Mission Dossier Document Button -->
+        <button type="button" class="btn-tactical-connector" id="btnHeaderDossier" title="Generate Official SAR Mission Intelligence Dossier (PDF / Word Document)" style="border-color: rgba(16, 185, 129, 0.5); color: #34d399; background: rgba(16, 185, 129, 0.1);">
+          <i class="fa-solid fa-file-invoice"></i>
+          <span>SAR DOSSIER (PDF)</span>
+        </button>
+
+        <!-- Drone Connector Station Button -->
+        <button type="button" class="btn-tactical-connector" id="btnOpenDroneConnector" title="Configure and connect physical drone telemetry link or real GPS">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span id="hdrDroneProtocolText">DRONE: READY</span>
+        </button>
+
+
+        <!-- Quick Arm Toggle Button -->
+        <button type="button" class="btn-tactical-arm disarmed" id="btnQuickArm" title="Toggle Drone Motor Arming">
+          <i class="fa-solid fa-power-off"></i>
+          <span id="hdrArmText">DISARMED</span>
+        </button>
+
+        <!-- Real Device GPS Sync Toggle Button -->
+        <button type="button" class="btn-tactical-gps" id="btnToggleRealGps" title="Sync live tactical map and telemetry with this device's physical GPS sensor">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          <span id="hdrRealGpsText">REAL GPS: OFF</span>
+        </button>
+
+        <!-- Operational Mode Indicator Badge -->
+        <div class="sim-mode-badge" id="simModeBadge" title="Current drone telemetry operating mode" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+          <i class="fa-solid fa-satellite"></i>
+          <span id="simModeText">LIVE TACTICAL</span>
+        </div>
+
+        <!-- FastAPI Connection Status Pill -->
+        <div class="status-pill connecting" id="apiStatusPill" title="FastAPI Backend Health & Connection">
+          <span class="status-dot connecting" id="apiStatusDot"></span>
+          <span id="apiStatusText">CHECKING...</span>
+        </div>
+
+        <!-- Sync Controls -->
+        <div class="sync-controls">
+          <label class="sync-toggle-label" title="Toggle automatic telemetry refresh every 2 seconds">
+            <input type="checkbox" id="autoRefreshToggle" checked>
+            <span>Auto Sync</span>
+          </label>
+          <button class="btn-icon" id="refreshBtn" title="Manually refresh telemetry now">
+            <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+          </button>
+          <span class="last-sync-text" id="lastSyncTimestamp">--:--:--</span>
+        </div>
+
+        <!-- Operator Authentication Profile Badge & Lock Terminal -->
+        <div class="operator-profile-pill" id="operatorProfilePill" title="Active Authenticated Operator">
+          <div class="operator-badge-icon"><i class="fa-solid fa-user-shield"></i></div>
+          <div class="operator-badge-meta">
+            <span class="operator-callsign" id="hdrOperatorCallsign">CMD-FAHAD</span>
+            <span class="operator-role-tag" id="hdrOperatorRole">COMMANDER</span>
+          </div>
+          <button type="button" class="btn-lock-terminal" id="btnLockTerminal" title="Lock Terminal / Sign Out">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         DRONE CONNECTOR MODAL (POPUP)
+         ==================================================================== -->
+    <div class="modal-backdrop" id="droneConnectModal" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="fa-solid fa-satellite-dish" style="color: var(--accent-cyan);"></i>
+            <span>Drone Hardware &amp; Telemetry Connector</span>
+          </div>
+          <button type="button" class="btn-icon-sm" id="closeModalBtn" title="Close modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-section-label">1. Select Connection Protocol</div>
+          <div class="protocol-grid">
+            <!-- Mode A: Tactical Telemetry -->
+            <div class="proto-card active" data-protocol="SIMULATION" id="protoCardSim">
+              <div class="proto-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+              <div class="proto-name">Tactical Telemetry</div>
+              <div class="proto-desc">Autonomous flight trajectory, altitude, battery health, and IMU variance tracking.</div>
+              <span class="proto-badge">SIMULATION</span>
+            </div>
+
+            <!-- Mode B: Real Device GPS Direct -->
+            <div class="proto-card" data-protocol="DEVICE_GPS_SYNC" id="protoCardGps">
+              <div class="proto-icon"><i class="fa-solid fa-location-crosshairs"></i></div>
+              <div class="proto-name">Real Device GPS</div>
+              <div class="proto-desc">Uses this laptop/phone's physical GPS sensor. Perfect for outdoor field testing.</div>
+              <span class="proto-badge badge-green">REAL GPS</span>
+            </div>
+
+            <!-- Mode C: MAVLink Serial Port -->
+            <div class="proto-card" data-protocol="MAVLINK_SERIAL" id="protoCardSerial">
+              <div class="proto-icon"><i class="fa-solid fa-plug"></i></div>
+              <div class="proto-name">MAVLink Serial (COM)</div>
+              <div class="proto-desc">Connects to physical flight controller (Pixhawk, ArduPilot, PX4, SiK Radio) via USB COM port.</div>
+              <span class="proto-badge">HARDWARE</span>
+            </div>
+
+            <!-- Mode D: MAVLink UDP Stream -->
+            <div class="proto-card" data-protocol="MAVLINK_UDP" id="protoCardUdp">
+              <div class="proto-icon"><i class="fa-solid fa-network-wired"></i></div>
+              <div class="proto-name">MAVLink UDP Bridge</div>
+              <div class="proto-desc">Interfaces with QGroundControl, Mission Planner, or Wi-Fi telemetry bridge on UDP 14550.</div>
+              <span class="proto-badge">NETWORK</span>
+            </div>
+          </div>
+
+          <!-- Configuration Fields -->
+          <div class="modal-section-label">2. Target Configuration &amp; Baudrate</div>
+          <div class="conn-config-row">
+            <div class="form-group" style="flex: 2;">
+              <label for="connTargetInput">Port / Connection Address:</label>
+              <input type="text" id="connTargetInput" class="tactical-input" placeholder="e.g. COM3 or 127.0.0.1:14550" value="Sector 7B Grid (Autonomous)">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="connBaudSelect">Baudrate:</label>
+              <select id="connBaudSelect" class="tactical-input">
+                <option value="57600">57600 (Telemetry)</option>
+                <option value="115200" selected>115200 (Fast)</option>
+                <option value="921600">921600 (High-Speed)</option>
+                <option value="38400">38400</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Drone Controls in Modal -->
+          <div class="modal-section-label">3. Flight Controller State &amp; Arming</div>
+          <div class="conn-controls-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="modalFlightModeSelect">Flight Mode:</label>
+              <select id="modalFlightModeSelect" class="tactical-input">
+                <option value="STANDBY">STANDBY</option>
+                <option value="AUTO-SEARCH" selected>AUTO-SEARCH</option>
+                <option value="LOITER">LOITER (HOVER)</option>
+                <option value="RTL">RTL (RETURN TO LAUNCH)</option>
+                <option value="LAND">LAND</option>
+                <option value="MANUAL">MANUAL FLIGHT</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+              <button type="button" class="btn-tactical-arm disarmed" id="modalArmToggleBtn" style="width: 100%; height: 40px;">
+                <i class="fa-solid fa-power-off"></i>
+                <span id="modalArmBtnText">MOTORS DISARMED</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Diagnostics Strip -->
+          <div class="modal-diag-strip">
+            <div class="modal-diag-item">
+              <span>Link Status:</span>
+              <strong id="modalLinkStatusBadge" style="color: var(--accent-cyan);">TACTICAL LINK ACTIVE</strong>
+            </div>
+            <div class="modal-diag-item">
+              <span>Link Quality:</span>
+              <strong id="modalQualityVal">98%</strong>
+            </div>
+            <div class="modal-diag-item">
+              <span>Satellites:</span>
+              <strong id="modalSatsVal">18 Sats</strong>
+            </div>
+            <div class="modal-diag-item">
+              <span>Latency:</span>
+              <strong id="modalPingVal">&lt; 10 ms</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-tactical-secondary" id="modalDisconnectBtn">
+            <i class="fa-solid fa-plug-circle-xmark"></i>
+            <span>Disconnect Link</span>
+          </button>
+          <button type="button" class="btn-tactical-primary" id="modalConnectBtn">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <span>Connect Telemetry</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MAIN APP LAYOUT (SIDEBAR + CONTENT)
+         ==================================================================== -->
+    <div class="main-layout">
+
+      <!-- LEFT SIDEBAR NAVIGATION -->
+      <aside class="sidebar">
+        <div class="nav-section-title">Navigation</div>
+        <a href="#overview" class="nav-item active" data-tab="overview">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Overview</span>
+        </a>
+        <a href="#map" class="nav-item" data-tab="map">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Tactical Map</span>
+        </a>
+        <a href="#camera" class="nav-item" data-tab="camera">
+          <i class="fa-solid fa-camera"></i>
+          <span>Camera</span>
+        </a>
+        <a href="#thermal" class="nav-item" data-tab="thermal">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #f97316;"></i>
+          <span>Thermal IR</span>
+        </a>
+        <a href="#detection" class="nav-item" data-tab="detection">
+          <i class="fa-solid fa-brain"></i>
+          <span>YOLO Vision</span>
+        </a>
+        <a href="#drone" class="nav-item" data-tab="drone">
+          <i class="fa-solid fa-helicopter"></i>
+          <span>Drone Status</span>
+        </a>
+        <a href="#mission" class="nav-item" data-tab="mission">
+          <i class="fa-solid fa-route"></i>
+          <span>Mission Control</span>
+        </a>
+        <a href="#reports" class="nav-item" data-tab="reports">
+          <i class="fa-solid fa-file-waveform"></i>
+          <span>Reports &amp; Logs</span>
+        </a>
+
+        <div class="sidebar-footer">
+          <div class="system-status-mini">
+            <span>FastAPI Backend</span>
+            <span class="badge badge-cyan">v0.1.0</span>
+          </div>
+          <div class="system-status-mini">
+            <span>GPS Tracking</span>
+            <span class="badge badge-success" id="sidebarGpsBadge">ONLINE</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN DASHBOARD CONTENT -->
+      <main class="dashboard-content">
+
+        <!-- Backend Offline Alert Banner (Dynamically shown when unreachable) -->
+        <div class="alert-banner" id="backendAlertBanner" style="display: none;">
+          <div class="alert-banner-content">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+              <strong>Backend Connection Unavailable:</strong>
+              <span id="backendAlertMsg">FastAPI backend is not responding at http://127.0.0.1:8000.</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn-retry" id="btnConfigBackend" style="background: rgba(0, 243, 255, 0.15); border: 1px solid rgba(0, 243, 255, 0.4); color: var(--accent-cyan); cursor: pointer;">
+              <i class="fa-solid fa-cloud"></i>
+              <span>Set Backend URL</span>
+            </button>
+            <button type="button" class="btn-retry" id="retryConnectBtn">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>Retry</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================================================================
+             SECTION: DRONE STATUS & AVIONICS
+             ================================================================ -->
+        <section class="dashboard-section" data-section="drone" id="sectionDrone">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-helicopter"></i>
+              <span>Drone Avionics &amp; Telemetry</span>
+            </h2>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge badge-cyan" id="droneConnStatus">SIMULATED</span>
+              <span class="badge badge-secondary" id="droneArmed">DISARMED</span>
+            </div>
+          </div>
+
+          <!-- Telemetry Metrics Grid -->
+          <div class="metrics-grid">
+            <!-- Drone ID & Mode -->
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Drone ID</span>
+                <i class="fa-solid fa-fingerprint metric-icon"></i>
+              </div>
+              <div class="metric-value" id="droneId">SkyResQ-DRONE-01</div>
+              <div class="metric-sub">
+                <span>Flight Mode:</span>
+                <strong id="flightMode" style="color: var(--accent-cyan);">STANDBY</strong>
+              </div>
+            </div>
+
+            <!-- Battery Status -->
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Battery Level</span>
+                <i class="fa-solid fa-battery-three-quarters metric-icon"></i>
+              </div>
+              <div class="metric-value" id="batteryPercentage">85%</div>
+              <div class="battery-gauge">
+                <div class="battery-fill-level good" id="batteryFill" style="width: 85%;"></div>
+              </div>
+              <div class="metric-sub">
+                <span>Voltage:</span>
+                <strong id="batteryVoltage">22.8 V</strong>
+              </div>
+            </div>
+
+            <!-- GPS Coordinates -->
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">GPS Position &amp; Fix</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="badge badge-secondary" id="gpsSourceBadge" style="font-size:0.65rem;padding:2px 7px;letter-spacing:0.04em;">SIM</span>
+                  <i class="fa-solid fa-satellite metric-icon"></i>
+                </div>
+              </div>
+              <div class="metric-value" style="font-size:0.97rem;font-family:'JetBrains Mono',monospace;letter-spacing:0.01em;line-height:1.4;" id="gpsCoordinates">28.613900&deg; N, 77.209000&deg; E</div>
+              <div class="metric-sub" style="margin-top:4px;">
+                <span>Sats / Fix:</span>
+                <strong id="satellites" style="color:var(--accent-cyan);">18 &bull; 3D-FIX</strong>
+              </div>
+              <div class="metric-sub" style="margin-top:2px;">
+                <span>Accuracy:</span>
+                <strong id="gpsAccuracyDisplay" style="color:#34d399;">-- m</strong>
+              </div>
+            </div>
+
+            <!-- Altitude -->
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Altitude (AGL)</span>
+                <i class="fa-solid fa-arrows-up-to-line metric-icon"></i>
+              </div>
+              <div class="metric-value" id="altitude">48.2 m</div>
+              <div class="metric-sub">
+                <span>Heading:</span>
+                <strong id="heading">284°</strong>
+              </div>
+            </div>
+
+            <!-- Ground Speed -->
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Ground Speed</span>
+                <i class="fa-solid fa-gauge-high metric-icon"></i>
+              </div>
+              <div class="metric-value" id="speed">14.2 m/s</div>
+              <div class="metric-sub">
+                <span>Pitch / Roll:</span>
+                <strong id="valPitchRoll">-28° / +1°</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION: TACTICAL GPS MISSION MAP (LEAFLET.JS) - HIGH DETAIL
+             ================================================================ -->
+        <section class="dashboard-section" data-section="map" id="sectionMap">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-map-location-dot"></i>
+              <span>Tactical GPS Mission Map &amp; Real-Time Geo-Tracking</span>
+            </h2>
+            <div class="map-header-badges">
+              <div class="map-layer-switcher-chips">
+                <button type="button" class="btn-layer-chip active" id="btnLayerGoogle" data-layer="google" title="Google Maps (Streets, Highways & Local Landmarks - High Detail)">
+                  <i class="fa-solid fa-map-location-dot"></i> <span>Google Map</span>
+                </button>
+                <button type="button" class="btn-layer-chip" id="btnLayerSat" data-layer="satellite" title="Google Satellite Imagery with Clear Roads & Labels">
+                  <i class="fa-solid fa-earth-asia"></i> <span>Satellite</span>
+                </button>
+                <button type="button" class="btn-layer-chip" id="btnLayerTerrain" data-layer="terrain" title="Google Terrain Elevation Contours & Topography">
+                  <i class="fa-solid fa-mountain"></i> <span>Terrain</span>
+                </button>
+                <button type="button" class="btn-layer-chip" id="btnLayerDark" data-layer="dark" title="Tactical Night Dark Mode Map">
+                  <i class="fa-solid fa-moon"></i> <span>Dark</span>
+                </button>
+                <button type="button" class="btn-layer-chip" id="btnMapApiKey" title="Map Tile Information & Status">
+                  <i class="fa-solid fa-circle-info"></i> <span>Map Info</span>
+                </button>
+              </div>
+              <span class="badge badge-success" id="mapFixBadge"><i class="fa-solid fa-satellite"></i> RTK FIX: 0.02m</span>
+              <span class="badge badge-cyan" id="mapModeBadge"><i class="fa-solid fa-helicopter"></i> AUTONOMOUS TRACKING</span>
+            </div>
+          </div>
+
+          <div class="tactical-map-wrapper">
+            <!-- Map Floating Location Search Bar (India Friendly) -->
+            <div class="map-search-bar" id="mapSearchBar">
+              <div class="map-search-input-group">
+                <i class="fa-solid fa-magnifying-glass search-leading-icon"></i>
+                <input type="text" id="mapLocationInput" placeholder="Search Indian locality, city, pincode (e.g. Indiranagar, Anna Nagar, Connaught Place, 560001...)" autocomplete="off">
+                <button type="button" class="btn-search-clear" id="btnMapSearchClear" title="Clear query" style="display: none;">
+                  <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+                <button type="button" class="btn-search-gps" id="btnMapDetectGps" title="Detect my live GPS location in India">
+                  <i class="fa-solid fa-crosshairs"></i>
+                  <span>My GPS</span>
+                </button>
+                <button type="button" class="btn-search-locate" id="btnMapSearchLocate" title="Search and fly to location">
+                  <i class="fa-solid fa-location-arrow"></i>
+                  <span>Locate</span>
+                </button>
+              </div>
+
+              <!-- Indian Quick Hubs Preset Chips -->
+              <div class="map-preset-chips" id="mapIndianPresetChips">
+                <span class="preset-label"><i class="fa-solid fa-compass"></i> Quick Recon Hubs:</span>
+                <button type="button" class="chip-btn" data-lat="11.5271" data-lon="76.1384" data-name="Wayanad SAR">🚨 Wayanad Landslide</button>
+                <button type="button" class="chip-btn" data-lat="30.7346" data-lon="79.0669" data-name="Kedarnath Flood">🌊 Kedarnath Valley</button>
+                <button type="button" class="chip-btn" data-lat="28.6139" data-lon="77.2090" data-name="Delhi NCR">Delhi NCR</button>
+                <button type="button" class="chip-btn" data-lat="19.0760" data-lon="72.8777" data-name="Mumbai">Mumbai</button>
+                <button type="button" class="chip-btn" data-lat="12.9716" data-lon="77.5946" data-name="Bangalore">Bangalore</button>
+                <button type="button" class="chip-btn" data-lat="26.1833" data-lon="91.7333" data-name="Assam Flood">Assam Flood</button>
+              </div>
+
+              <div class="map-search-dropdown" id="mapSearchDropdown" style="display: none;"></div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div id="tacticalMissionMap" class="tactical-leaflet-container"></div>
+
+            <!-- High-Detail Tactical Avionics HUD Strip (Floating Map Overlay) -->
+            <div class="map-hud-overlay">
+              <div class="map-hud-readout">
+                <div class="map-hud-item">
+                  <span class="map-hud-label">GPS Coords</span>
+                  <span class="map-hud-val" id="mapHudLatLon">28.61390, 77.20900</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">MGRS Grid</span>
+                  <span class="map-hud-val" id="mapHudMgrs" style="color: var(--accent-cyan);">43R EP 2841 9021</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Altitude</span>
+                  <span class="map-hud-val" id="mapHudAlt">48.2 m AGL</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Elevation ASL</span>
+                  <span class="map-hud-val" id="mapHudAltAsl">214.5 m</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Ground Speed</span>
+                  <span class="map-hud-val" id="mapHudSpeed">14.2 m/s</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Heading</span>
+                  <span class="map-hud-val" id="mapHudHeading">284° WNW</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Wind Vector</span>
+                  <span class="map-hud-val" id="mapHudWind" style="color: #38bdf8;">NW 3.4 m/s</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Range to Home</span>
+                  <span class="map-hud-val" id="mapHudRtlDist" style="color: #34d399;">385 m</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">GPS Accuracy</span>
+                  <span class="map-hud-val" id="mapHudAccuracy" style="color: #34d399;">-- m</span>
+                </div>
+                <div class="map-hud-item">
+                  <span class="map-hud-label">Satellites</span>
+                  <span class="map-hud-val" id="mapHudSats">18 (NAVIC+GPS)</span>
+                </div>
+              </div>
+
+              <!-- Map Control Buttons -->
+              <div class="map-hud-controls">
+                <button type="button" class="btn-map-control active" id="btnAutoPanFollow" title="Auto-pan map to follow drone">
+                  <i class="fa-solid fa-arrows-to-dot"></i>
+                  <span>Follow</span>
+                </button>
+                <button type="button" class="btn-map-control" id="btnCenterDrone" title="Center map on current drone position">
+                  <i class="fa-solid fa-crosshairs"></i>
+                  <span>Center Drone</span>
+                </button>
+                <button type="button" class="btn-map-control active" id="btnToggleFlightTrail" title="Toggle flight path breadcrumbs trail">
+                  <i class="fa-solid fa-route"></i>
+                  <span>Trail</span>
+                </button>
+                <button type="button" class="btn-map-control active" id="btnToggleVisionCone" title="Toggle real-time drone camera vision cone projection">
+                  <i class="fa-solid fa-video"></i>
+                  <span>FOV Cone</span>
+                </button>
+                <button type="button" class="btn-map-control active" id="btnToggleScanCircle" title="Toggle scanning coverage radius perimeter">
+                  <i class="fa-solid fa-circle-notch"></i>
+                  <span>Scan Radius</span>
+                </button>
+                <button type="button" class="btn-map-control" id="btnCenterMyGps" title="Center on your real device physical location">
+                  <i class="fa-solid fa-street-view"></i>
+                  <span>My Location</span>
+                </button>
+                <button type="button" class="btn-map-control" id="btnClearMapPins" title="Clear casualty markers and flight trail">
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>Clear</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION: LIVE LAPTOP CAMERA & REAL-TIME YOLO VISION
+             ================================================================ -->
+        <section class="dashboard-section" data-section="camera" id="sectionCamera">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-camera"></i>
+              <span>Multi-Sensor Tactical Camera Station &amp; Recon</span>
+            </h2>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span class="badge badge-success" id="cameraStatusBadge"><i class="fa-solid fa-video"></i> SENSOR READY</span>
+              <span class="badge badge-cyan" id="cameraDetectionModeBadge"><i class="fa-solid fa-brain"></i> YOLO ACTIVE</span>
+              <span class="badge badge-sensor-drone" id="cameraActiveSensorBadge"><i class="fa-solid fa-helicopter"></i> DRONE RGB</span>
+            </div>
+          </div>
+
+          <!-- Drone Connection / Hardware Routing Status Banner -->
+          <div class="camera-connection-mode-banner" id="cameraConnectionModeBanner" style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
+              <span class="status-pulse-dot" id="cameraModeDot" style="background: #ef4444; width: 8px; height: 8px; border-radius: 50%;"></span>
+              <span id="cameraModeStatusText" style="color: #cbd5e1;">Hardware Status: No Drone Connected &bull; Connect Drone to Access Aerial Sensors</span>
+            </div>
+            <div id="cameraModeActionPill" style="font-size: 11px;">
+              <span id="cameraModeActionText" style="color: var(--accent-cyan);"><i class="fa-solid fa-laptop"></i> Laptop &amp; Phone Camera available for standalone YOLO detection</span>
+            </div>
+          </div>
+
+          <!-- Multi-Sensor Ingestion Source Selector Tabs -->
+          <div class="camera-source-tabs" id="cameraSourceTabs" style="margin-bottom: 14px;">
+            <button type="button" class="btn-cam-source" id="btnSourceDroneRgb" data-source="drone_rgb" title="Aerial 4K Optical Drone Camera (Requires Drone Connection)">
+              <i class="fa-solid fa-helicopter"></i>
+              <span>Drone RGB Camera</span>
+              <span class="cam-status-pill" id="badgeDroneRgbStatus" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-plug"></i> CONNECT DRONE</span>
+            </button>
+            <button type="button" class="btn-cam-source" id="btnSourceThermal" data-source="thermal" title="FLIR Radiometric Thermal IR Sensor (Requires Drone Connection)">
+              <i class="fa-solid fa-temperature-arrow-up"></i>
+              <span>Thermal IR Camera</span>
+              <span class="cam-status-pill" id="badgeThermalStatus" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-plug"></i> CONNECT DRONE</span>
+            </button>
+            <button type="button" class="btn-cam-source active" id="btnSourceLaptop" data-source="laptop" title="Integrated Laptop Hardware Webcam for Real-Time YOLO Detection">
+              <i class="fa-solid fa-laptop"></i>
+              <span>Laptop Camera</span>
+              <span class="cam-status-pill" id="badgeLaptopStatus" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="fa-solid fa-bolt"></i> YOLO READY</span>
+            </button>
+            <button type="button" class="btn-cam-source" id="btnSourcePhone" data-source="phone" title="Mobile Phone Camera for Real-Time YOLO Detection">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+              <span>Phone Camera</span>
+              <span class="cam-status-pill" id="badgePhoneStatus" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="fa-solid fa-bolt"></i> YOLO READY</span>
+            </button>
+          </div>
+
+
+          <!-- Casualty Detected Notification Flash Alert -->
+          <div class="casualty-alert-banner" id="casualtyAlertBanner" style="display: none;">
+            <i class="fa-solid fa-person-circle-exclamation"></i>
+            <div>
+              <strong>CASUALTY LOCALIZED:</strong>
+              <span id="casualtyAlertText">Target detected. Tactical GPS coordinates logged and mapped.</span>
+            </div>
+          </div>
+
+          <div class="webcam-station-grid">
+            <!-- Left: Live Optical Viewport with Tactical Reticle & Canvas Overlay -->
+            <div class="tactical-panel webcam-view-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-eye"></i>
+                  <span id="cameraViewportTitle">Optical Video Feed &amp; Target Reticle</span>
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span class="badge badge-secondary" id="webcamResolution">640 x 480</span>
+                  <span class="badge badge-cyan" id="webcamInferenceFps">0.0 FPS</span>
+                </div>
+              </div>
+
+              <div class="camera-stream-wrapper" id="webcamWrapper">
+                <!-- Tactical Corner Reticles -->
+                <div class="hud-corner top-left"></div>
+                <div class="hud-corner top-right"></div>
+                <div class="hud-corner bottom-left"></div>
+                <div class="hud-corner bottom-right"></div>
+                <div class="hud-crosshair"></div>
+
+                <!-- Aerial Drone Flight HUD Overlay -->
+                <div class="drone-aerial-hud" id="droneAerialHud">
+                  <div class="hud-top-bar">
+                    <span class="hud-tag" id="hudSensorTag"><i class="fa-solid fa-helicopter"></i> SENSOR: DRONE 4K RGB</span>
+                    <span class="hud-tag">ALT: <strong id="hudDroneAlt">120m AGL</strong></span>
+                    <span class="hud-tag">SPD: <strong id="hudDroneSpeed">14.2 m/s</strong></span>
+                    <span class="hud-tag">HDG: <strong id="hudDroneHdg">284° WNW</strong></span>
+                  </div>
+                  <div class="hud-tactical-reticle">
+                    <div class="reticle-circle"></div>
+                    <div class="reticle-h-lines"></div>
+                    <div class="reticle-v-lines"></div>
+                  </div>
+                  <div class="hud-bottom-bar">
+                    <span class="hud-tag">LAT/LON: <strong id="hudDroneGps">28.6139, 77.2090</strong></span>
+                    <span class="hud-tag">FLIR ISOTHERMAL: <strong id="hudThermalTag">ARMED</strong></span>
+                    <span class="hud-tag" style="color: var(--accent-emerald);">LINK: 98.4% (5.8 GHz)</span>
+                  </div>
+                </div>
+
+                <!-- Live HTML5 Video element capturing from camera -->
+                <video id="laptopWebcamVideo" autoplay playsinline muted></video>
+
+                <!-- Overlay canvas drawing YOLO bounding boxes and labels -->
+                <canvas id="webcamOverlayCanvas"></canvas>
+
+                <!-- Hidden canvas for capturing video snapshots -->
+                <canvas id="webcamHiddenCanvas" style="display: none;"></canvas>
+
+                <!-- Placeholder when camera is inactive or drone is disconnected -->
+                <div class="webcam-standby-placeholder" id="webcamStandby">
+                  <i class="fa-solid fa-triangle-exclamation standby-icon" id="standbyIcon" style="color: #f59e0b;"></i>
+                  <div class="standby-title" id="standbyTitle">Drone Not Found</div>
+                  <div class="standby-subtitle" id="standbySubtitle">Connect a drone to access RGB camera view.</div>
+                  <div id="standbyActionContainer" style="margin-top: 14px;"></div>
+                </div>
+              </div>
+
+              <!-- Stream Metrics Strip -->
+              <div class="panel-body-grid webcam-metrics-strip">
+                <div class="info-item">
+                  <span class="info-label">Inference Latency</span>
+                  <span class="info-value" id="valWebcamLatency">-- ms</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">AI Processing Rate</span>
+                  <span class="info-value" id="valWebcamFps">-- FPS</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Active Model</span>
+                  <span class="info-value" id="valWebcamModel">yolov8n.pt</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Current Frame Targets</span>
+                  <span class="info-value" id="valWebcamDetections" style="color: var(--accent-cyan);">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Real-time Camera Controls & Settings -->
+            <div class="tactical-panel webcam-controls-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-sliders"></i>
+                  <span>Live Vision Controls</span>
+                </h3>
+                <span class="badge badge-cyan">WEBCAM AI</span>
+              </div>
+
+              <!-- Primary Camera Action Buttons -->
+              <div class="webcam-action-column">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <button type="button" class="btn-tactical-primary" id="btnStartWebcam">
+                    <i class="fa-solid fa-video" id="iconStartWebcam"></i>
+                    <span id="textStartWebcam">Start Camera</span>
+                  </button>
+                  <button type="button" class="btn-tactical-connector" id="btnPairMobileCam" style="background: rgba(0, 243, 255, 0.12); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Pair Phone Cam</span>
+                  </button>
+                </div>
+
+                <!-- Camera Flip Button (Front / Rear) for Mobile & Multi-Cam -->
+                <button type="button" class="btn-tactical-secondary" id="btnFlipFrontBack" style="margin-top: 4px;">
+                  <i class="fa-solid fa-camera-rotate"></i>
+                  <span id="textFlipCamera">Flip Camera (Rear / Front)</span>
+                </button>
+
+                <!-- Continuous AI Detection Switch -->
+                <div class="toggle-control-card">
+                  <div class="toggle-info">
+                    <strong>Live AI Continuous Detection</strong>
+                    <span>Continuously runs YOLOv8 model inference over the camera feed (every ~600ms)</span>
+                  </div>
+                  <label class="tactical-switch">
+                    <input type="checkbox" id="toggleContinuousDetection" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Snapshot Detection Button & Direct Mobile Capture -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <button type="button" class="btn-tactical-secondary" id="btnSnapshotDetect" disabled>
+                    <i class="fa-solid fa-camera-retro"></i>
+                    <span>Analyze Frame</span>
+                  </button>
+                  <label class="btn-tactical-secondary" for="mobileDirectCameraInput" id="btnMobileDirectScan" style="margin: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="Directly triggers phone camera on mobile browsers">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Phone Scan</span>
+                  </label>
+                  <input type="file" id="mobileDirectCameraInput" accept="image/*" capture="environment" style="display: none;">
+                </div>
+
+                <!-- Camera Device Selector -->
+                <div class="form-group" style="margin-top: 14px;">
+                  <label for="webcamCameraSelect">Camera Ingestion Source / Sensor:</label>
+                  <select id="webcamCameraSelect" class="tactical-input">
+                    <option value="drone_rgb" selected>🛸 Drone RGB Camera (Aerial 4K Search Feed)</option>
+                    <option value="thermal">🌡️ Thermal Camera (FLIR Radiometric IR Heat Sensor)</option>
+                    <option value="laptop">💻 Laptop Camera (Integrated Hardware Webcam)</option>
+                    <option value="phone">📱 Phone Camera (Remote Mobile Node / Companion)</option>
+                  </select>
+                </div>
+
+
+                <!-- Confidence Threshold Slider -->
+                <div class="slider-control-group" style="margin-top: 14px;">
+                  <div class="slider-header">
+                    <label for="webcamConfSlider">Detection Threshold:</label>
+                    <span class="slider-value-badge" id="webcamConfVal">25%</span>
+                  </div>
+                  <input type="range" id="webcamConfSlider" min="5" max="95" value="25" step="5" class="tactical-slider">
+                  <div class="slider-limits">
+                    <span>5% (High Recall)</span>
+                    <span>95% (High Precision)</span>
+                  </div>
+                </div>
+
+                <!-- Live Target List Log -->
+                <div class="webcam-target-log-container">
+                  <div class="log-title">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Real-Time Targets In View</span>
+                  </div>
+                  <div class="webcam-targets-list" id="webcamTargetsList">
+                    <div class="empty-target-notice">No targets currently detected in camera field of view.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION: RADIOMETRIC FLIR THERMAL INFRARED (IR) CAMERA STATION
+             ================================================================ -->
+        <section class="dashboard-section" data-section="thermal" id="sectionThermal">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-temperature-arrow-up" style="color: #f97316;"></i>
+              <span>FLIR Radiometric Thermal IR Camera &amp; Heat Signatures</span>
+            </h2>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span class="badge badge-warning" id="thermalSensorBadge"><i class="fa-solid fa-fire"></i> FLIR BOSON 640 LWIR</span>
+              <span class="badge badge-success" id="thermalAlarmBadge"><i class="fa-solid fa-bell"></i> ISOTHERMAL ALARM: ARMED</span>
+              <span class="badge badge-cyan" id="thermalCoreTempBadge"><i class="fa-solid fa-microchip"></i> SENSOR: 32.4°C</span>
+            </div>
+          </div>
+
+          <!-- Thermal Casualty Alarm Banner -->
+          <div class="casualty-alert-banner" id="thermalCasualtyAlert" style="display: none; background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
+            <i class="fa-solid fa-fire-flame-curved" style="color: #ef4444;"></i>
+            <div>
+              <strong style="color: #ef4444;">HUMAN THERMAL HEAT SIGNATURE LOCKED:</strong>
+              <span id="thermalAlertText">Body core temperature anomaly localized within 36.5°C - 38.2°C window!</span>
+            </div>
+          </div>
+
+          <div class="thermal-station-grid">
+            <!-- Left: Thermal Viewport with Spectrum LUT, Reticle & Spot Temperature -->
+            <div class="tactical-panel thermal-view-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-crosshairs"></i>
+                  <span>Radiometric Thermal Stream (8 - 14 µm LWIR)</span>
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span class="badge badge-secondary" id="thermalPaletteName">PALETTE: FLIR IRONBOW</span>
+                  <span class="badge badge-cyan" id="thermalSpotTemp">SPOT: 37.2°C</span>
+                </div>
+              </div>
+
+              <div class="thermal-viewport-wrapper" id="thermalViewportWrapper">
+                <!-- Tactical Corner Reticles & Crosshairs -->
+                <div class="hud-corner top-left"></div>
+                <div class="hud-corner top-right"></div>
+                <div class="hud-corner bottom-left"></div>
+                <div class="hud-corner bottom-right"></div>
+                <div class="hud-crosshair"></div>
+
+                <!-- Thermal Spot Meter Pin in Center -->
+                <div class="thermal-center-crosshair">
+                  <div class="thermal-reticle-ring"></div>
+                  <div class="thermal-spot-badge" id="thermalSpotTag">
+                    <i class="fa-solid fa-temperature-half"></i> <span id="lblThermalSpotVal">37.2°C</span>
+                  </div>
+                </div>
+
+                <!-- Hotspot / Coldspot Indicators -->
+                <div class="thermal-spot-marker max-temp" id="thermalMaxMarker" style="top: 38%; left: 52%;">
+                  <span>MAX: <strong id="lblThermalMaxVal">38.4°C</strong></span>
+                </div>
+                <div class="thermal-spot-marker min-temp" id="thermalMinMarker" style="top: 75%; left: 22%;">
+                  <span>MIN: <strong id="lblThermalMinVal">18.6°C</strong></span>
+                </div>
+
+                <!-- HTML5 Canvas rendering processed Thermal LUT Shader -->
+                <canvas id="thermalCanvas" class="thermal-canvas-feed"></canvas>
+
+                <!-- Color Scale Gradient Bar on the Right of Feed -->
+                <div class="thermal-color-bar-container">
+                  <span class="scale-label max-scale" id="lblScaleMax">42°C</span>
+                  <div class="thermal-color-bar" id="thermalColorBar"></div>
+                  <span class="scale-label min-scale" id="lblScaleMin">15°C</span>
+                </div>
+
+                <!-- Standby / Inactive State -->
+                <div class="webcam-standby-placeholder" id="thermalStandbyPlaceholder" style="display: none;">
+                  <i class="fa-solid fa-temperature-empty standby-icon"></i>
+                  <div class="standby-title">Thermal Sensor Initializing</div>
+                  <div class="standby-subtitle">Connecting FLIR LWIR Radiometric Stream...</div>
+                </div>
+              </div>
+
+              <!-- Thermal Stream Telemetry Strip -->
+              <div class="panel-body-grid thermal-metrics-strip">
+                <div class="info-item">
+                  <span class="info-label">Max Hotspot</span>
+                  <span class="info-value" id="valThermalMax" style="color: #f87171;">38.4°C</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Min Coldspot</span>
+                  <span class="info-value" id="valThermalMin" style="color: #60a5fa;">18.6°C</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mean Scene Temp</span>
+                  <span class="info-value" id="valThermalMean">26.1°C</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Isothermal Delta</span>
+                  <span class="info-value" id="valThermalDelta" style="color: #34d399;">+11.1°C</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Thermal Controls, Palettes & Isothermal Alarm Calibration -->
+            <div class="tactical-panel thermal-controls-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-sliders"></i>
+                  <span>FLIR IR Sensor Controls</span>
+                </h3>
+                <span class="badge badge-warning">RADIOMETRIC</span>
+              </div>
+
+              <div class="thermal-controls-content">
+                <!-- Color Palette Switcher -->
+                <div class="form-group">
+                  <label class="tactical-field-label"><i class="fa-solid fa-palette"></i> Thermal Color Palette:</label>
+                  <div class="thermal-palette-buttons">
+                    <button type="button" class="btn-palette active" data-palette="ironbow" id="btnPaletteIronbow">
+                      <span class="palette-swatch swatch-ironbow"></span>
+                      <span>Ironbow</span>
+                    </button>
+                    <button type="button" class="btn-palette" data-palette="whitehot" id="btnPaletteWhiteHot">
+                      <span class="palette-swatch swatch-whitehot"></span>
+                      <span>White Hot</span>
+                    </button>
+                    <button type="button" class="btn-palette" data-palette="blackhot" id="btnPaletteBlackHot">
+                      <span class="palette-swatch swatch-blackhot"></span>
+                      <span>Black Hot</span>
+                    </button>
+                    <button type="button" class="btn-palette" data-palette="rainbow" id="btnPaletteRainbow">
+                      <span class="palette-swatch swatch-rainbow"></span>
+                      <span>Rainbow HC</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Input Source Sync with Optical Webcam -->
+                <div class="toggle-control-card" style="margin-top: 10px;">
+                  <div class="toggle-info">
+                    <strong>Sync with Live Camera Stream</strong>
+                    <span>Transforms active video feed into real-time radiometric infrared thermal view</span>
+                  </div>
+                  <label class="tactical-switch">
+                    <input type="checkbox" id="toggleThermalSyncCam" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Isothermal Heat Signature Detection Alarm -->
+                <div class="toggle-control-card" style="margin-top: 10px;">
+                  <div class="toggle-info">
+                    <strong>Human Heat Signature Lock (36.5°C - 38.5°C)</strong>
+                    <span>Audio-visual alarm when living human body temperature is localized in debris/mud</span>
+                  </div>
+                  <label class="tactical-switch">
+                    <input type="checkbox" id="toggleIsothermalAlarm" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Isothermal Alarm Sensitivity Slider -->
+                <div class="slider-control-group" style="margin-top: 14px;">
+                  <div class="slider-header">
+                    <label for="sliderThermalSensitivity">Alarm Threshold Window:</label>
+                    <span class="slider-value-badge" id="lblThermalThreshold">36.0°C - 39.0°C</span>
+                  </div>
+                  <input type="range" id="sliderThermalSensitivity" min="30" max="42" value="37" step="0.5" class="tactical-slider">
+                  <div class="slider-limits">
+                    <span>30°C (Hypothermic)</span>
+                    <span>42°C (Hyperthermic / Fire)</span>
+                  </div>
+                </div>
+
+                <!-- Actions: Snapshot & Calibrate -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
+                  <button type="button" class="btn-tactical-primary" id="btnCaptureThermalSnap" style="background: linear-gradient(135deg, #ea580c 0%, #d97706 100%); border-color: #f97316;">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Thermal Snap</span>
+                  </button>
+                  <button type="button" class="btn-tactical-secondary" id="btnCalibrateNuc">
+                    <i class="fa-solid fa-arrows-spin"></i>
+                    <span>NUC Calibrate</span>
+                  </button>
+                </div>
+
+                <!-- Sensor Spec Hardware Info Box -->
+                <div class="thermal-specs-box" style="margin-top: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px; font-size: 11px;">
+                  <div style="font-weight: 700; color: #f97316; margin-bottom: 6px; font-family: 'Orbitron', sans-serif;">
+                    <i class="fa-solid fa-microchip"></i> FLIR Boson 640 Hardware Profile
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; color: var(--text-secondary);">
+                    <div>FPA: VOx Microbolometer</div>
+                    <div>Pixel Pitch: 12 µm</div>
+                    <div>Thermal Sensitivity: &lt;40 mK</div>
+                    <div>Radiometric Accuracy: &plusmn;2°C</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             SECTION: DEDICATED YOLO NEURAL DETECTION STATION (IMAGE UPLOAD)
+             ================================================================ -->
+        <section class="dashboard-section" data-section="detection" id="sectionYoloDetection">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-brain"></i>
+              <span>YOLO Neural Vision &amp; Detection Station</span>
+            </h2>
+            <div class="detection-header-badges">
+              <span class="badge badge-success" id="yoloEngineHealthBadge"><i class="fa-solid fa-microchip"></i> YOLO ENGINE: READY</span>
+              <span class="badge badge-cyan" id="yoloModeBadge"><i class="fa-solid fa-flask"></i> TEST IMAGE MODE</span>
+            </div>
+          </div>
+
+          <!-- Detection Workspace Grid (Upload + Annotated Preview) -->
+          <div class="yolo-workspace-grid">
+
+            <!-- Left Column: Ingestion & Controls -->
+            <div class="tactical-panel yolo-control-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Image Ingestion &amp; Inference</span>
+                </h3>
+                <span class="badge badge-cyan">LOCAL FILE</span>
+              </div>
+
+              <!-- Drag & Drop Zone -->
+              <div class="upload-dropzone" id="detectionDropzone">
+                <input type="file" id="detectionFileInput" accept=".jpg,.jpeg,.png,.webp,.bmp" style="display: none;">
+                <div class="dropzone-content">
+                  <i class="fa-solid fa-images dropzone-icon"></i>
+                  <div class="dropzone-text">
+                    <strong>Drop aerial/SAR test image here</strong>
+                    <span>or <button type="button" class="btn-link" id="browseImageBtn">Browse Device</button></span>
+                  </div>
+                  <div class="dropzone-hint">Supports JPEG, PNG, WEBP (Max 15MB)</div>
+                </div>
+              </div>
+
+              <!-- Selected File Card -->
+              <div class="selected-file-card" id="selectedFileCard" style="display: none;">
+                <div class="selected-file-info">
+                  <i class="fa-solid fa-file-image"></i>
+                  <div class="file-details">
+                    <span class="file-name" id="selectedFileName">sample.jpg</span>
+                    <span class="file-size" id="selectedFileSize">0 KB</span>
+                  </div>
+                </div>
+                <button type="button" class="btn-icon-sm" id="clearSelectedFileBtn" title="Clear selection">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <!-- Confidence Slider -->
+              <div class="slider-control-group">
+                <div class="slider-header">
+                  <label for="confThresholdSlider">Confidence Threshold:</label>
+                  <span class="slider-value-badge" id="confThresholdVal">25%</span>
+                </div>
+                <input type="range" id="confThresholdSlider" min="5" max="95" value="25" step="5" class="tactical-slider">
+                <div class="slider-limits">
+                  <span>5% (High Recall)</span>
+                  <span>95% (High Precision)</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="yolo-action-row">
+                <button type="button" class="btn-tactical-primary" id="runDetectionBtn" disabled>
+                  <i class="fa-solid fa-crosshairs" id="runDetectionIcon"></i>
+                  <span id="runDetectionText">Upload &amp; Detect</span>
+                </button>
+                <button type="button" class="btn-tactical-secondary" id="loadSampleImageBtn" title="Load sample SAR aerial test image">
+                  <i class="fa-solid fa-vial"></i>
+                  <span>Sample SAR Image</span>
+                </button>
+              </div>
+
+              <!-- Alerts -->
+              <div class="detection-alert error" id="detectionErrorAlert" style="display: none;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="detectionErrorText">Error message</span>
+              </div>
+
+              <div class="detection-alert processing" id="detectionProcessingAlert" style="display: none;">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Running neural YOLOv8 inference &amp; rendering bounding boxes...</span>
+              </div>
+            </div>
+
+            <!-- Right Column: Annotated Vision Output -->
+            <div class="tactical-panel yolo-preview-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">
+                  <i class="fa-solid fa-eye"></i>
+                  <span>Annotated Vision Output</span>
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span class="badge badge-secondary" id="annotatedImageDims">STANDBY</span>
+                  <a href="#" target="_blank" class="btn-icon-sm" id="openAnnotatedFullBtn" style="display: none;" title="Open full resolution in new tab">
+                    <i class="fa-solid fa-up-right-from-square"></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="annotated-viewport" id="annotatedViewport">
+                <!-- Tactical HUD Reticles -->
+                <div class="hud-corner top-left"></div>
+                <div class="hud-corner top-right"></div>
+                <div class="hud-corner bottom-left"></div>
+                <div class="hud-corner bottom-right"></div>
+                <div class="hud-crosshair"></div>
+
+                <img id="annotatedImagePreview" src="" alt="Annotated Detection Output" style="display: none;">
+
+                <div class="viewport-placeholder" id="viewportPlaceholder">
+                  <i class="fa-solid fa-crosshairs-simple placeholder-icon"></i>
+                  <div class="placeholder-title">No Active Inference</div>
+                  <div class="placeholder-subtitle">Select or drop an aerial image on the left to run YOLO detection</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Metrics Strip -->
+          <div class="panel-body-grid yolo-metrics-strip" id="detectionSummaryStrip">
+            <div class="info-item">
+              <span class="info-label">Inference Status</span>
+              <span class="info-value" id="detStatusValue">IDLE</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Detection Mode</span>
+              <span class="info-value" id="detModeValue">TEST_IMAGE</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Active Model</span>
+              <span class="info-value" id="detModelValue">yolov8n.pt</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Threshold</span>
+              <span class="info-value" id="detConfValue">0.25</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Total Objects</span>
+              <span class="info-value" id="detTotalValue" style="color: var(--accent-cyan);">0</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Person Detections</span>
+              <span class="info-value" id="detPersonsValue" style="color: var(--accent-emerald);">0</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Hazard Detections</span>
+              <span class="info-value" id="detHazardsValue" style="color: var(--accent-amber);">0</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Inference Time</span>
+              <span class="info-value" id="detTimestampValue">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- Detected Targets Table -->
+          <div class="tactical-panel yolo-table-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <i class="fa-solid fa-table-list"></i>
+                <span>Detected Targets Breakdown</span>
+              </h3>
+              <span class="badge badge-cyan" id="tableDetectionsCount">0 Targets</span>
+            </div>
+            <div class="table-responsive">
+              <table class="tactical-table" id="detectionsTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Target Class</th>
+                    <th>Confidence</th>
+                    <th>Bounding Box [X1, Y1, X2, Y2]</th>
+                    <th>Dimensions</th>
+                    <th>Classification Note</th>
+                  </tr>
+                </thead>
+                <tbody id="detectionsTableBody">
+                  <tr class="empty-table-row">
+                    <td colspan="6">No detection targets available. Submit an image above to run inference.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Detection History Grid -->
+          <div class="tactical-panel yolo-history-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Recent Detection Runs</span>
+              </h3>
+              <div class="panel-header-actions" style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn-icon-sm btn-clear-history" id="btnClearAllHistoryBtn" title="Delete all captured detection images and runs">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button type="button" class="btn-icon-sm" id="refreshHistoryBtn" title="Refresh detection history">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+              </div>
+            </div>
+            <div class="history-grid" id="detectionHistoryList">
+              <div class="history-empty-notice">No past detection runs recorded yet.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             DUAL SECTION: MISSION CONTROL & AI DETECTION SUMMARY
+             ================================================================ -->
+        <div class="dashboard-columns">
+
+          <!-- MISSION CONTROL & AUTONOMOUS SEARCH GRID -->
+          <section class="dashboard-section" data-section="mission" id="sectionMission">
+            <div class="tactical-panel">
+              <div class="panel-header">
+                <h2 class="panel-title">
+                  <i class="fa-solid fa-route"></i>
+                  <span>Mission Planning &amp; Autonomous Search Grid</span>
+                </h2>
+                <span class="badge badge-cyan" id="missionDataMode">AUTOPILOT READY</span>
+              </div>
+
+              <!-- SPECIFIC SCAN LOCATION & COVERAGE RADIUS SECTOR CONFIG -->
+              <div class="scan-target-config-card" id="scanTargetConfigCard" style="margin-bottom: 18px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 8px; padding: 14px;">
+                <div class="config-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 8px;">
+                  <div class="config-card-title" style="font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-crosshairs" style="color: var(--accent-cyan);"></i>
+                    <span>Target Scan Location &amp; Drone Coverage Radius</span>
+                  </div>
+                  <span class="badge badge-cyan" id="badgeTargetMode">SECTOR ARMED</span>
+                </div>
+
+                <div class="scan-config-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                  <!-- Col 1: Preset & Details -->
+                  <div class="config-col">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                      <label class="tactical-field-label" style="font-size: 11px; color: #cbd5e1; margin-bottom: 4px; display: block;"><i class="fa-solid fa-location-dot"></i> Preset Incident Sector:</label>
+                      <select id="selectSectorPreset" class="tactical-input" style="width: 100%;">
+                        <option value="custom">📍 Custom Coordinates / Interactive Map Click</option>
+                        <option value="wayanad" selected>🚨 Wayanad Landslide Zone (Kerala) &bull; 11.5271° N, 76.1384° E</option>
+                        <option value="kedarnath">🌊 Kedarnath Valley Flash Flood Grid (Uttarakhand) &bull; 30.7346° N, 79.0669° E</option>
+                        <option value="brahmaputra">🌊 Brahmaputra River Flood Sector (Assam) &bull; 26.1833° N, 91.7333° E</option>
+                        <option value="delhi">🏢 Delhi-NCR Urban Structural Collapse &bull; 28.6139° N, 77.2090° E</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 10px;">
+                      <label class="tactical-field-label" style="font-size: 11px; color: #cbd5e1; margin-bottom: 4px; display: block;"><i class="fa-solid fa-tag"></i> Location Name &amp; Incident Notes:</label>
+                      <input type="text" id="inputSectorName" class="tactical-input" style="width: 100%; box-sizing: border-box;" value="Sector 7B - Wayanad Landslide Debris Corridor" placeholder="e.g. Sector Alpha - River Flood Bank">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                      <div class="form-group">
+                        <label class="tactical-field-label" style="font-size: 10.5px; color: #94a3b8; margin-bottom: 4px; display: block;">Target Latitude:</label>
+                        <input type="number" step="0.000001" id="inputSectorLat" class="tactical-input" style="width: 100%; box-sizing: border-box;" value="11.527100">
+                      </div>
+                      <div class="form-group">
+                        <label class="tactical-field-label" style="font-size: 10.5px; color: #94a3b8; margin-bottom: 4px; display: block;">Target Longitude:</label>
+                        <input type="number" step="0.000001" id="inputSectorLng" class="tactical-input" style="width: 100%; box-sizing: border-box;" value="76.138400">
+                      </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <button type="button" class="btn-tactical-secondary" id="btnUseDroneGpsForSector" style="flex: 1; font-size: 11px; padding: 6px;">
+                        <i class="fa-solid fa-helicopter"></i> Sync Drone GPS
+                      </button>
+                      <button type="button" class="btn-tactical-secondary" id="btnPickSectorOnMap" style="flex: 1; font-size: 11px; padding: 6px;">
+                        <i class="fa-solid fa-crosshairs"></i> Click on Map
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Col 2: Radius Slider & Calculated Metrics -->
+                  <div class="config-col">
+                    <div class="slider-control-group" style="margin-top: 0;">
+                      <div class="slider-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="sliderCoverageRadius" style="font-size: 11px; font-weight: 600; color: #cbd5e1;"><i class="fa-solid fa-circle-dot"></i> Scanning Coverage Radius:</label>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                          <span class="slider-value-badge" id="lblCoverageRadiusMeters" style="font-size: 12px; font-weight: 700; color: var(--accent-cyan);">600 m</span>
+                          <span style="font-size: 11px; color: var(--text-secondary);">(<span id="lblCoverageRadiusKm">0.60 km</span>)</span>
+                        </div>
+                      </div>
+                      <input type="range" id="sliderCoverageRadius" min="100" max="5000" value="600" step="50" class="tactical-slider">
+                      <div class="slider-limits" style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b; margin-top: 2px;">
+                        <span>100 m (Focused Spot)</span>
+                        <span>1,000 m (Local Sector)</span>
+                        <span>5,000 m (5km Wide)</span>
+                      </div>
+                    </div>
+
+                    <!-- Calculated Mission Estimation Cards -->
+                    <div class="sector-metrics-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px;">
+                      <div class="metric-mini-box" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 8px;">
+                        <span class="mini-label" style="font-size: 10px; color: #94a3b8; display: block;">Coverage Area</span>
+                        <strong class="mini-val" id="lblCalcArea" style="font-size: 14px; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">1.13 km²</strong>
+                        <span class="mini-sub" id="lblCalcAreaHectares" style="font-size: 10px; color: #64748b; display: block;">113.1 Hectares</span>
+                      </div>
+                      <div class="metric-mini-box" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 8px;">
+                        <span class="mini-label" style="font-size: 10px; color: #94a3b8; display: block;">Est. Flight Duration</span>
+                        <strong class="mini-val" id="lblCalcDuration" style="font-size: 14px; color: #fbbf24; font-family: 'JetBrains Mono', monospace;">14m 20s</strong>
+                        <span class="mini-sub" style="font-size: 10px; color: #64748b; display: block;">@ 14.0 m/s cruise</span>
+                      </div>
+                      <div class="metric-mini-box" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 8px;">
+                        <span class="mini-label" style="font-size: 10px; color: #94a3b8; display: block;">Scan Path Distance</span>
+                        <strong class="mini-val" id="lblCalcPathDist" style="font-size: 14px; color: #a78bfa; font-family: 'JetBrains Mono', monospace;">12.1 km</strong>
+                        <span class="mini-sub" style="font-size: 10px; color: #64748b; display: block;">Grid Transects</span>
+                      </div>
+                      <div class="metric-mini-box" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 8px;">
+                        <span class="mini-label" style="font-size: 10px; color: #94a3b8; display: block;">Battery Consumption</span>
+                        <strong class="mini-val" id="lblCalcBattery" style="font-size: 14px; color: #34d399; font-family: 'JetBrains Mono', monospace;">~22%</strong>
+                        <span class="mini-sub" style="font-size: 10px; color: #64748b; display: block;">LiPo 6S 22.8V</span>
+                      </div>
+                    </div>
+
+                    <!-- Arm and Set Sector Button -->
+                    <button type="button" class="btn-tactical-primary" id="btnDeployScanSector" style="width: 100%; margin-top: 10px; padding: 9px; font-weight: 700; font-size: 12px;">
+                      <i class="fa-solid fa-radar"></i>
+                      <span>ARM SCAN RADIUS &amp; SYNC WITH MAP</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pattern Selectors -->
+              <div class="mission-pattern-row">
+                <button type="button" class="btn-pattern active" id="btnPatternLawnmower" data-pattern="lawnmower">
+                  <i class="fa-solid fa-bars"></i>
+                  <span>Lawnmower Grid</span>
+                </button>
+                <button type="button" class="btn-pattern" id="btnPatternSpiral" data-pattern="spiral">
+                  <i class="fa-solid fa-arrows-spin"></i>
+                  <span>Expanding Spiral</span>
+                </button>
+                <button type="button" class="btn-pattern" id="btnPatternSector" data-pattern="sector">
+                  <i class="fa-solid fa-pie-chart"></i>
+                  <span>Sector Sweep</span>
+                </button>
+              </div>
+
+              <!-- Mission Parameters -->
+              <div class="panel-body-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-top: 14px;">
+                <div class="info-item">
+                  <span class="info-label">Search Status</span>
+                  <span class="info-value" id="missionStatus" style="color: var(--accent-emerald);">STANDBY</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mission ID</span>
+                  <span class="info-value" id="missionId">SAR-OP-001</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Coverage Area</span>
+                  <span class="info-value" id="missionTargetArea">Sector 7B (1.2 km²)</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Grid Progress</span>
+                  <span class="info-value" id="missionProgressPct" style="color: var(--accent-cyan);">0%</span>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mission-progress-container" style="margin-top: 14px;">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" id="missionProgressBar" style="width: 0%;"></div>
+                </div>
+                <div class="progress-meta-row">
+                  <span id="missionCellsSweptText">Cells Swept: 0 / 36</span>
+                  <span id="missionEstTimeText">Est. Remaining: --:--</span>
+                </div>
+              </div>
+
+              <!-- Mission Action Buttons -->
+              <div class="mission-controls-row" style="margin-top: 16px;">
+                <button type="button" class="btn-tactical-primary" id="btnStartMissionSweep">
+                  <i class="fa-solid fa-play"></i>
+                  <span>Start Autonomous Sweep</span>
+                </button>
+                <button type="button" class="btn-tactical-secondary" id="btnPauseMissionSweep" disabled>
+                  <i class="fa-solid fa-pause"></i>
+                  <span>Pause Hover</span>
+                </button>
+                <button type="button" class="btn-tactical-secondary" id="btnRtlMission">
+                  <i class="fa-solid fa-house"></i>
+                  <span>Return to Launch (RTL)</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- DETECTION SUMMARY CARD (OVERVIEW) -->
+          <section class="dashboard-section" data-section="overview" id="sectionDetection">
+            <div class="tactical-panel">
+              <div class="panel-header">
+                <h2 class="panel-title">
+                  <i class="fa-solid fa-person-circle-exclamation"></i>
+                  <span>AI Detection Summary</span>
+                </h2>
+                <span class="badge badge-cyan" id="detectionDataMode">YOLO ACTIVE</span>
+              </div>
+              <div class="panel-body-grid">
+                <div class="info-item">
+                  <span class="info-label">Victims Detected</span>
+                  <span class="info-value" style="color: var(--accent-cyan);" id="victimsCount">0</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Hazards Detected</span>
+                  <span class="info-value" style="color: var(--accent-amber);" id="hazardsCount">0</span>
+                </div>
+                <div class="info-item info-item-full">
+                  <span class="info-label">Last Detection Timestamp</span>
+                  <span class="info-value" id="lastDetectionTime">None Recorded</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- ================================================================
+             SECTION: SYSTEM INFORMATION & REPORTS
+             ================================================================ -->
+        <section class="dashboard-section" data-section="reports" id="sectionReports">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-file-waveform"></i>
+              <span>Mission Reports &amp; Data Export</span>
+            </h2>
+            <span class="badge badge-success" id="healthStatus">SERVICE OK</span>
+          </div>
+
+          <!-- Mission Debriefing Card -->
+          <div class="tactical-panel">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-clipboard-list"></i> <span>Incident Commander Debriefing</span></h3>
+              <span class="badge badge-cyan">INCIDENT BRIEF</span>
+            </div>
+            <div class="panel-body-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+              <div class="info-item">
+                <span class="info-label">Active Mission ID</span>
+                <span class="info-value">SAR-SECTOR-7B</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Flight Duration</span>
+                <span class="info-value" id="repFlightDuration">24m 18s</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Distance Covered</span>
+                <span class="info-value" id="repDistanceCovered">3.8 km</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Battery Consumed</span>
+                <span class="info-value" id="repBatteryUsed">17%</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Casualties Localized</span>
+                <span class="info-value" id="repTotalCasualties" style="color: var(--accent-cyan);">0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Hazards Recorded</span>
+                <span class="info-value" id="repTotalHazards" style="color: var(--accent-amber);">0</span>
+              </div>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="report-export-row" style="margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap;">
+              <button type="button" class="btn-tactical-primary" id="btnGenerateDossier" style="background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%); border-color: #38bdf8; box-shadow: 0 0 16px rgba(56, 189, 248, 0.35); font-weight: 700;">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Generate Official SAR Mission Dossier (Print / PDF / Doc)</span>
+              </button>
+              <button type="button" class="btn-tactical-secondary" id="btnExportJson">
+                <i class="fa-solid fa-file-code"></i>
+                <span>Export Mission Log (JSON)</span>
+              </button>
+              <button type="button" class="btn-tactical-secondary" id="btnExportCsv">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Export Target Detections (CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- System Diagnostics Card -->
+          <div class="tactical-panel" style="margin-top: 20px;">
+            <div class="panel-header">
+              <h3 class="panel-title"><i class="fa-solid fa-server"></i> <span>System Diagnostics &amp; Host Link</span></h3>
+            </div>
+            <div class="panel-body-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+              <div class="info-item">
+                <span class="info-label">Backend Service</span>
+                <span class="info-value" id="serviceName">skyresq-backend</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">API Version</span>
+                <span class="info-value" id="serviceVersion">0.1.0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Environment</span>
+                <span class="info-value" id="systemEnv">DEVELOPMENT</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Data Mode</span>
+                <span class="info-value" id="systemDataMode">LIVE OPERATIONAL</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- ====================================================================
+         FOOTER
+         ==================================================================== -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>SkyResQ Independent &bull; Aerial Search &amp; Rescue Telemetry System</span>
+      </div>
+      <div>
+        <span>Backend Host: </span>
+        <a href="http://127.0.0.1:8000/docs" target="_blank" rel="noopener noreferrer" class="footer-api-link" id="footerDocsLink">
+          http://127.0.0.1:8000 (API Docs)
+        </a>
+        <button type="button" id="btnEditBackendUrlFooter" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; margin-left: 8px; font-size: 11px; text-decoration: underline;" title="Configure Render / Cloud Backend URL">
+          <i class="fa-solid fa-gear"></i> Change URL
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ======================================================================
+       MODAL 1: MOBILE CAMERA PAIRING & QR CODE
+       ====================================================================== -->
+  <div class="tactical-modal-backdrop" id="modalPairMobileCamBackdrop" style="display: none;">
+    <div class="tactical-modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-mobile-screen-button" style="color: var(--accent-cyan);"></i>
+          <span>Pair Smartphone Camera</span>
+        </h3>
+        <button type="button" class="btn-close-modal" id="btnClosePairMobileCam">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="text-align: center; padding: 20px;">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">
+          Transform your mobile phone into an autonomous wireless search-and-rescue camera. Scan this QR code or navigate to the link below on your phone:
+        </p>
+
+        <!-- QR Code Container -->
+        <div style="background: #fff; padding: 14px; border-radius: 12px; display: inline-block; margin-bottom: 16px; box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);">
+          <img id="mobilePairQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=http://10.217.159.171:8080/mobile-cam.html" alt="Mobile Camera QR Code" width="180" height="180" style="display: block;">
+        </div>
+
+        <!-- Direct URL and Copy Button -->
+        <div style="background: rgba(10, 16, 28, 0.9); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px;">
+          <input type="text" id="txtMobileCamUrl" readonly value="http://10.217.159.171:8080/mobile-cam.html" style="background: transparent; border: none; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 100%; outline: none;">
+          <button type="button" class="btn-tactical-secondary" id="btnCopyMobileCamUrl" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">
+            <i class="fa-solid fa-copy"></i> Copy
+          </button>
+        </div>
+
+        <!-- Connection Watcher -->
+        <div style="background: rgba(14, 22, 38, 0.8); border-radius: 8px; padding: 12px; font-size: 12px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span class="status-dot connecting" id="mobileNodeDot"></span>
+          <span id="mobileNodeStatusText">WAITING FOR SMARTPHONE CONNECTION...</span>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+        <a href="mobile-cam.html" target="_blank" class="btn-tactical-secondary" style="text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
+        </a>
+        <button type="button" class="btn-tactical-primary" id="btnConfirmPairMobileCam">
+          <span>Done</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 2: DEDICATED SQLITE DATABASE INSPECTOR & EXPORTER
+       ====================================================================== -->
+  <div class="tactical-modal-backdrop" id="modalDatabaseInspectorBackdrop" style="display: none;">
+    <div class="tactical-modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-database" style="color: #60a5fa;"></i>
+          <span>SkyResQ Project Database (SQLite)</span>
+        </h3>
+        <button type="button" class="btn-close-modal" id="btnCloseDatabaseInspector">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background: rgba(10, 16, 28, 0.9); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Database Storage Engine</div>
+          <div style="font-family: 'JetBrains Mono', monospace; color: #60a5fa; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-server"></i>
+            <span>SQLite 3 &bull; Write-Ahead Logging (WAL) Mode</span>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); margin-top: 6px; word-break: break-all;" id="dbFilePathDisplay">
+            Path: backend/data/skyresq.db
+          </div>
+        </div>
+
+        <!-- Live Database Tables Breakdown -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
+          <div class="info-item" style="background: rgba(14, 22, 38, 0.8); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <span class="info-label"><i class="fa-solid fa-person-burst" style="color: var(--accent-red);"></i> Persisted Detections</span>
+            <span class="info-value" id="dbCountDetections" style="font-size: 20px; font-weight: 700; color: #fff;">0</span>
+          </div>
+          <div class="info-item" style="background: rgba(14, 22, 38, 0.8); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <span class="info-label"><i class="fa-solid fa-map-location-dot" style="color: var(--accent-cyan);"></i> SAR Missions</span>
+            <span class="info-value" id="dbCountMissions" style="font-size: 20px; font-weight: 700; color: #fff;">1</span>
+          </div>
+          <div class="info-item" style="background: rgba(14, 22, 38, 0.8); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <span class="info-label"><i class="fa-solid fa-plane" style="color: #a78bfa;"></i> Telemetry Log Points</span>
+            <span class="info-value" id="dbCountTelemetry" style="font-size: 20px; font-weight: 700; color: #fff;">0</span>
+          </div>
+          <div class="info-item" style="background: rgba(14, 22, 38, 0.8); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <span class="info-label"><i class="fa-solid fa-mobile-screen" style="color: #34d399;"></i> Mobile Camera Nodes</span>
+            <span class="info-value" id="dbCountCameraNodes" style="font-size: 20px; font-weight: 700; color: #fff;">0</span>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+          <i class="fa-solid fa-shield-check" style="color: #34d399;"></i>
+          All detection events, bounding boxes, survivor locations, and mission logs are permanently stored on disk and will automatically survive system restarts.
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn-tactical-secondary" id="btnRefreshDbStats" style="font-size: 12px;">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-tactical-primary" id="btnExportDbJson" style="font-size: 12px;">
+            <i class="fa-solid fa-file-arrow-down"></i> Export Database (JSON)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: OFFICIAL SAR MISSION DOSSIER DOCUMENT (SKYRESQ DEFENSE GRADE)
+       ==================================================================== -->
+  <div class="modal-backdrop" id="modalMissionDossier" style="display: none;">
+    <div class="modal-dialog modal-dossier-dialog">
+      <div class="modal-header" style="background: #0f172a; border-bottom: 1px solid rgba(0, 240, 255, 0.3);">
+        <div class="modal-title" style="color: #fff; font-family: 'Orbitron', sans-serif; font-size: 14px;">
+          <i class="fa-solid fa-file-invoice" style="color: var(--accent-cyan);"></i>
+          <span>Official SAR Mission Intelligence Dossier</span>
+          <span class="badge badge-warning" style="margin-left: 8px;">OFFICIAL SAR DEFENSE GRADE</span>
+        </div>
+        <button type="button" class="btn-icon-sm" id="btnCloseDossierModal" title="Close Dossier">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="dossier-scroll-area">
+        <!-- Printable White Document Sheet -->
+        <div class="dossier-document" id="printableDossierDoc">
+          <!-- Document Header -->
+          <div class="dossier-header-grid">
+            <div class="dossier-national-crests">
+              <img id="dossierEmblemImg" src="assets/logos/skyresq_logo.png" alt="SkyResQ Emblem" class="dossier-emblem-img">
+              <div class="dossier-gov-titles">
+                <h2>SKYRESQ &bull; AERIAL SEARCH &amp; RESCUE MISSION REPORT</h2>
+                <h3>AUTONOMOUS RECONNAISSANCE &amp; DISASTER INTELLIGENCE</h3>
+                <p>MISSION DEBRIEFING &amp; CASUALTY LOCALIZATION REPORT // NDRF TACTICAL RESCUE CORPS</p>
+              </div>
+            </div>
+            <div class="dossier-meta-stamp">
+              <div class="stamp-box">TACTICAL CLASSIFIED</div>
+              <div>DOC ID: <strong id="docDossierId">SKYRESQ-SAR-2026-0924</strong></div>
+              <div>DATE: <span id="docDossierDate">24-SEP-2026</span></div>
+              <div>SECURITY: <strong>LEVEL-4 AUTHORIZED</strong></div>
+            </div>
+          </div>
+
+          <div class="dossier-title-section">
+            <h1>AERIAL SEARCH &amp; RESCUE TACTICAL DEBRIEFING REPORT</h1>
+            <div class="dossier-doc-id">INCIDENT COMMAND CODE: OP-SKYRESQ-SECTOR-7B</div>
+          </div>
+
+          <!-- Summary Metrics Cards -->
+          <div class="dossier-summary-grid">
+            <div class="dossier-stat-card alert-casualty">
+              <div class="stat-label">Casualties Localized</div>
+              <div class="stat-val" id="docCountCasualties">0</div>
+            </div>
+            <div class="dossier-stat-card alert-hazard">
+              <div class="stat-label">Hazards Identified</div>
+              <div class="stat-val" id="docCountHazards">0</div>
+            </div>
+            <div class="dossier-stat-card">
+              <div class="stat-label">Mission Flight Time</div>
+              <div class="stat-val" id="docFlightDuration">00m 00s</div>
+            </div>
+            <div class="dossier-stat-card">
+              <div class="stat-label">Total Area Swept</div>
+              <div class="stat-val" id="docAreaSwept">0.00 km²</div>
+            </div>
+          </div>
+
+          <!-- Operational Overview -->
+          <div class="dossier-section">
+            <div class="dossier-section-title">
+              <span>1. Mission Avionics &amp; Telemetry Profile</span>
+            </div>
+            <table class="dossier-table">
+              <tbody>
+                <tr>
+                  <td><strong>Drone Unit ID:</strong> <span id="docDroneId">SkyResQ-DRONE-01</span></td>
+                  <td><strong>Incident Commander:</strong> <span id="docCommanderName">CMD-FAHAD</span></td>
+                  <td><strong>Operational Sector:</strong> Sector 7B (Tactical Grid)</td>
+                </tr>
+                <tr>
+                  <td><strong>Telemetry Protocol:</strong> <span id="docProtocol">STANDBY / MAVLINK</span></td>
+                  <td><strong>Satellites Acquired:</strong> <span id="docSatellites">18 Satellites (NAVIC/GPS)</span></td>
+                  <td><strong>Battery Consumed:</strong> <span id="docBatteryUsed">17%</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Mean Operational Altitude:</strong> <span id="docAltitude">48.3 m AGL</span></td>
+                  <td><strong>Cruising Ground Speed:</strong> <span id="docSpeed">14.1 m/s</span></td>
+                  <td><strong>Optical Payload:</strong> Dual HD Optical Gimbal + YOLOv8 Neural Engine</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Detailed Georeferenced Casualty & Target Log -->
+          <div class="dossier-section">
+            <div class="dossier-section-title">
+              <span>2. Localized Casualty &amp; Hazard Georeferenced Manifest</span>
+              <span style="font-size: 11px; font-weight: normal; color: #475569;" id="docManifestCountLabel">0 Records Logged</span>
+            </div>
+            <table class="dossier-table" id="docDetectionsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Classification</th>
+                  <th>Confidence</th>
+                  <th>Latitude (GPS)</th>
+                  <th>Longitude (GPS)</th>
+                  <th>Altitude</th>
+                  <th>Detection Source</th>
+                  <th>Actionable Status</th>
+                </tr>
+              </thead>
+              <tbody id="docDetectionsTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Visual Photographic Evidence Section -->
+          <div class="dossier-section">
+            <div class="dossier-section-title">
+              <span>3. Aerial Visual Reconnaissance &amp; Image Evidence</span>
+            </div>
+            <div class="dossier-evidence-grid" id="docEvidenceGrid">
+              <!-- Dynamically populated with photo evidence cards -->
+            </div>
+          </div>
+
+          <!-- Operational Sign-off -->
+          <div class="dossier-sign-off">
+            <div class="sign-column">
+              <div><strong>Operational Authority:</strong> SkyResQ Search &amp; Rescue Incident Command</div>
+              <div><strong>Verification Status:</strong> <span style="color: #15803d; font-weight: 700;">DIGITALLY VERIFIED &amp; LOGGED</span></div>
+              <div class="sign-line"></div>
+              <div class="sign-caption">Lead UAV Flight Operator Signature</div>
+            </div>
+            <div class="sign-column" style="text-align: right;">
+              <div><strong>Authentication Checksum:</strong> <code id="docDossierChecksum">SHA256:7B8F9A0D</code></div>
+              <div style="margin-top: 4px;">NDRF Tactical Search &amp; Rescue Division &bull; National Emergency Management</div>
+              <div class="sign-line" style="margin-left: auto;"></div>
+              <div class="sign-caption">Incident Commander Authorization Stamp</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; border-top: 1px solid rgba(0, 240, 255, 0.2);">
+        <div style="font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
+          <i class="fa-solid fa-print"></i> Formatted for Standard A4 Paper &amp; Official Defense Briefings
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-tactical-secondary" id="btnDownloadWordDoc">
+            <i class="fa-solid fa-file-word" style="color: #38bdf8;"></i>
+            <span>Download Document (.doc)</span>
+          </button>
+          <button type="button" class="btn-tactical-primary" id="btnPrintDossierAction" style="background: linear-gradient(135deg, #0284c7 0%, #10b981 100%);">
+            <i class="fa-solid fa-print"></i>
+            <span>Print / Save as PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: FORGOT PASSWORD / OPERATOR CREDENTIAL RECOVERY
+       ==================================================================== -->
+  <div class="modal-backdrop" id="modalForgotPassword" style="display: none;">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-key" style="color: var(--accent-cyan);"></i>
+          <span>Password Recovery &bull; SkyResQ Operator Reset</span>
+        </div>
+        <button type="button" class="btn-icon-sm" id="btnCloseForgotPwModal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">
+          Enter your registered <strong>Username, Email ID, or Mobile Number</strong> to set a new security password directly.
+        </p>
+
+        <form id="forgotPasswordDirectForm" autocomplete="off">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; display: block;"><i class="fa-solid fa-id-badge"></i> Username, Email ID, or Mobile:</label>
+            <div class="input-wrapper">
+              <input type="text" id="forgotTargetInput" placeholder="e.g. pilot_rahul, pilot@skyresq.org, or +91 9876543210" class="tactical-input" style="width: 100%; box-sizing: border-box;" value="pilot@skyresq.org" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; display: block;"><i class="fa-solid fa-lock"></i> Create New Security Password:</label>
+            <input type="password" id="forgotNewPassword" placeholder="Min 4 characters" class="tactical-input" style="width: 100%; box-sizing: border-box;" autocomplete="new-password" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; display: block;"><i class="fa-solid fa-check-double"></i> Confirm New Password:</label>
+            <input type="password" id="forgotConfirmPassword" placeholder="Re-enter new password" class="tactical-input" style="width: 100%; box-sizing: border-box;" autocomplete="new-password" required>
+          </div>
+
+          <div id="forgotAlertStep2" class="gateway-alert error" style="display: none; margin-bottom: 14px;"></div>
+          <div id="forgotSuccessBanner" class="gateway-alert success" style="display: none; margin-bottom: 14px; font-size: 11.5px;">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="lblForgotOtpTarget">Password updated successfully! Logging into Mission Control...</span>
+          </div>
+
+          <button type="submit" class="btn-tactical-primary" id="btnSubmitPasswordReset" style="width: 100%; padding: 11px; font-weight: 700; background: linear-gradient(135deg, #059669 0%, #0d9488 100%);">
+            <i class="fa-solid fa-lock-open"></i> Reset Password &amp; Login
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Dashboard JavaScript Modules -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js?v=10.0"></script>
+  <script src="js/dashboard.js?v=10.0"></script>
+</body>
+</html>

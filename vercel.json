@@ -1,0 +1,48 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/frontend/index.html"
+    },
+    {
+      "source": "/mobile-cam",
+      "destination": "/frontend/mobile-cam.html"
+    },
+    {
+      "source": "/mobile-cam.html",
+      "destination": "/frontend/mobile-cam.html"
+    },
+    {
+      "source": "/css/:match*",
+      "destination": "/frontend/css/:match*"
+    },
+    {
+      "source": "/js/:match*",
+      "destination": "/frontend/js/:match*"
+    },
+    {
+      "source": "/assets/:match*",
+      "destination": "/frontend/assets/:match*"
+    },
+    {
+      "source": "/style.css",
+      "destination": "/frontend/style.css"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/frontend/app.js"
+    }
+  ]
+}

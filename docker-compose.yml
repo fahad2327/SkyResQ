@@ -1,0 +1,22 @@
+# ==============================================================================
+# SkyResQ: Docker Compose Multi-Environment Deployment
+# Smart India Hackathon (SIH 2026)
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  skyresq-mission-control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: skyresq_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./media:/app/media
+      - ./backend/data:/app/backend/data
+    environment:
+      - SKYRESQ_ENV=production
+      - SKYRESQ_MEDIA_DIR=/app/media
+    restart: unless-stopped
