@@ -89,11 +89,20 @@ class DetectionService:
         self._max_history = 50
         
         # Hydrate counters and history from persistent database
-        db_stats = get_detection_counts()
-        self._total_persons = db_stats["total_persons"]
-        self._total_hazards = db_stats["total_hazards"]
-        self._total_detections = db_stats["total_detections"]
-        self._last_detection_time: Optional[str] = db_stats["last_detection_time"]
+        try:
+            db_stats = get_detection_counts()
+        except Exception as e:
+            logger.warning(f"[SkyResQ Detection] Initial DB stats hydration deferred: {e}")
+            db_stats = {
+                "total_persons": 0,
+                "total_hazards": 0,
+                "total_detections": 0,
+                "last_detection_time": None
+            }
+        self._total_persons = db_stats.get("total_persons", 0)
+        self._total_hazards = db_stats.get("total_hazards", 0)
+        self._total_detections = db_stats.get("total_detections", 0)
+        self._last_detection_time: Optional[str] = db_stats.get("last_detection_time")
         self._data_mode = "LIVE_YOLO" if yolo_service.is_model_present() else "STANDBY"
         self._tracked_targets: Dict[str, Dict[str, Any]] = {}
 

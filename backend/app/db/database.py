@@ -49,11 +49,22 @@ def get_db():
         conn.close()
 
 
+_db_initialized = False
+
+
+def ensure_db_initialized() -> None:
+    """Ensures database schema exists before executing queries."""
+    global _db_initialized
+    if not _db_initialized:
+        init_db()
+
+
 def init_db() -> None:
     """
     Initializes database tables, creates necessary directories,
     and applies schema migrations.
     """
+    global _db_initialized
     settings.DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     with _db_lock, get_db() as conn:
@@ -235,6 +246,8 @@ def init_db() -> None:
             );
         """)
 
+    _db_initialized = True
+
 
 
 # ==============================================================================
@@ -308,32 +321,41 @@ def get_detection_counts() -> Dict[str, Any]:
     """
     Returns aggregated detection counts and latest timestamp.
     """
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as total FROM detections;")
-        total = cursor.fetchone()["total"]
+    ensure_db_initialized()
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as total FROM detections;")
+            total = cursor.fetchone()["total"]
 
-        cursor.execute("""
-            SELECT COUNT(*) as persons FROM detections
-            WHERE LOWER(class_name) IN ('person', 'casualty', 'survivor', 'human');
-        """)
-        persons = cursor.fetchone()["persons"]
+            cursor.execute("""
+                SELECT COUNT(*) as persons FROM detections
+                WHERE LOWER(class_name) IN ('person', 'casualty', 'survivor', 'human');
+            """)
+            persons = cursor.fetchone()["persons"]
 
-        cursor.execute("""
-            SELECT COUNT(*) as hazards FROM detections
-            WHERE LOWER(class_name) IN ('hazard', 'fire', 'smoke', 'debris', 'flood', 'vehicle', 'car', 'truck');
-        """)
-        hazards = cursor.fetchone()["hazards"]
+            cursor.execute("""
+                SELECT COUNT(*) as hazards FROM detections
+                WHERE LOWER(class_name) IN ('hazard', 'fire', 'smoke', 'debris', 'flood', 'vehicle', 'car', 'truck');
+            """)
+            hazards = cursor.fetchone()["hazards"]
 
-        cursor.execute("SELECT timestamp FROM detections ORDER BY id DESC LIMIT 1;")
-        latest_row = cursor.fetchone()
-        latest_time = latest_row["timestamp"] if latest_row else None
+            cursor.execute("SELECT timestamp FROM detections ORDER BY id DESC LIMIT 1;")
+            latest_row = cursor.fetchone()
+            latest_time = latest_row["timestamp"] if latest_row else None
 
+            return {
+                "total_detections": total,
+                "total_persons": persons,
+                "total_hazards": hazards,
+                "last_detection_time": latest_time
+            }
+    except Exception:
         return {
-            "total_detections": total,
-            "total_persons": persons,
-            "total_hazards": hazards,
-            "last_detection_time": latest_time
+            "total_detections": 0,
+            "total_persons": 0,
+            "total_hazards": 0,
+            "last_detection_time": None
         }
 
 

@@ -21,12 +21,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routes import api_router
 from app.core.config import settings
 from app.db import init_db
 
-# Initialize database tables and migrations
+# Initialize database tables and migrations BEFORE route controllers load
 init_db()
+
+from app.api.routes import api_router
 
 # Initialize FastAPI application with specified metadata
 app = FastAPI(
