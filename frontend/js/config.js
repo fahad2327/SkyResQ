@@ -14,9 +14,8 @@
  */
 
 window.__SKYRESQ_CONFIG__ = {
-  // 🚀 Paste your deployed Render Backend URL here (e.g. "https://skyresq-backend.onrender.com")
-  // Leave empty ("") to auto-detect localhost (local dev) or use browser-entered URL.
-  BACKEND_URL: "",
+  // 🚀 Deployed Render Backend URL
+  BACKEND_URL: "https://skyresq-backend-lrkd.onrender.com",
 
   // Timeout for API requests in milliseconds
   REQUEST_TIMEOUT_MS: 10000,
