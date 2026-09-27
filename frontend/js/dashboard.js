@@ -1362,8 +1362,21 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  function getIsRealPhysicalDroneConnected() {
+    return Boolean(
+      droneState &&
+      droneState.connected &&
+      droneState.hardware_connected &&
+      droneState.protocol !== 'SIMULATION' &&
+      droneState.protocol !== 'DISCONNECTED' &&
+      droneState.protocol !== 'DEVICE_GPS_SYNC'
+    );
+  }
+
   function updateCameraConnectionBanner() {
     const isDroneConnected = getIsDroneConnected();
+    const isPhysicalConnected = getIsRealPhysicalDroneConnected();
+    const isSimulation = droneState && droneState.protocol === 'SIMULATION';
     const banner = document.getElementById('cameraConnectionModeBanner');
     const dot = document.getElementById('cameraModeDot');
     const text = document.getElementById('cameraModeStatusText');
@@ -1372,13 +1385,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const badgeTherm = document.getElementById('badgeThermalStatus');
 
     if (banner) {
-      if (isDroneConnected) {
+      if (isPhysicalConnected) {
         if (dot) dot.style.background = '#10b981';
         if (text) {
-          text.innerHTML = `<strong style="color: #34d399;"><i class="fa-solid fa-helicopter"></i> DRONE LINK ACTIVE</strong> (${droneState.drone_id} &bull; ${droneState.protocol})`;
+          text.innerHTML = `<strong style="color: #34d399;"><i class="fa-solid fa-helicopter"></i> PHYSICAL DRONE LINK ACTIVE</strong> (${droneState.drone_id} &bull; ${droneState.protocol})`;
         }
         if (action) {
-          action.innerHTML = `<span style="color: var(--accent-cyan);"><i class="fa-solid fa-satellite-dish"></i> Aerial Footage Routing to Optical &amp; Thermal Stations</span>`;
+          action.innerHTML = `<span style="color: var(--accent-cyan);"><i class="fa-solid fa-satellite-dish"></i> Aerial Hardware Footage Routing to Optical &amp; Thermal Stations</span>`;
+        }
+      } else if (isSimulation) {
+        if (dot) dot.style.background = '#00f3ff';
+        if (text) {
+          text.innerHTML = `<strong style="color: var(--accent-cyan);"><i class="fa-solid fa-desktop"></i> DRONE SIMULATION ACTIVE</strong> (${droneState.drone_id} &bull; Synthetic Avionics)`;
+        }
+        if (action) {
+          action.innerHTML = `<span style="color: #94a3b8;"><i class="fa-solid fa-info-circle"></i> Procedural Flight Active &bull; Physical Drone Camera Standby</span>`;
         }
       } else {
         if (dot) dot.style.background = '#ef4444';
@@ -1391,13 +1412,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Dynamic Sensor Tabs Status Pills
+    // Dynamic Sensor Tabs Status Pills (RGB & Thermal Drone Sensors)
     if (badgeDrone) {
-      if (isDroneConnected) {
+      if (isPhysicalConnected) {
         badgeDrone.innerHTML = '<i class="fa-solid fa-circle"></i> ONLINE';
         badgeDrone.style.background = 'rgba(16, 185, 129, 0.15)';
         badgeDrone.style.color = '#34d399';
         badgeDrone.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      } else if (isSimulation) {
+        badgeDrone.innerHTML = '<i class="fa-solid fa-desktop"></i> SIMULATED';
+        badgeDrone.style.background = 'rgba(0, 243, 255, 0.12)';
+        badgeDrone.style.color = 'var(--accent-cyan)';
+        badgeDrone.style.borderColor = 'rgba(0, 243, 255, 0.3)';
       } else {
         badgeDrone.innerHTML = '<i class="fa-solid fa-plug"></i> CONNECT DRONE';
         badgeDrone.style.background = 'rgba(239, 68, 68, 0.15)';
@@ -1406,11 +1432,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (badgeTherm) {
-      if (isDroneConnected) {
+      if (isPhysicalConnected) {
         badgeTherm.innerHTML = '<i class="fa-solid fa-circle"></i> ONLINE';
         badgeTherm.style.background = 'rgba(16, 185, 129, 0.15)';
         badgeTherm.style.color = '#34d399';
         badgeTherm.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      } else if (isSimulation) {
+        badgeTherm.innerHTML = '<i class="fa-solid fa-desktop"></i> SIMULATED';
+        badgeTherm.style.background = 'rgba(0, 243, 255, 0.12)';
+        badgeTherm.style.color = 'var(--accent-cyan)';
+        badgeTherm.style.borderColor = 'rgba(0, 243, 255, 0.3)';
       } else {
         badgeTherm.innerHTML = '<i class="fa-solid fa-plug"></i> CONNECT DRONE';
         badgeTherm.style.background = 'rgba(239, 68, 68, 0.15)';
@@ -2319,22 +2350,29 @@ document.addEventListener('DOMContentLoaded', () => {
   function initMobilePairingModal() {
     if (!btnPairMobileCam || !modalPairMobileCamBackdrop) return;
 
-    // Resolve Mobile Companion URL using actual network host
-    const mobileHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? '10.217.159.171' // User's detected Wi-Fi IP
-      : window.location.hostname;
-    const mobilePort = window.location.port || '8080';
-    const mobileCamUrl = `${window.location.protocol}//${mobileHost}:${mobilePort}/mobile-cam.html`;
+    function refreshMobileUrl() {
+      const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const mobileHost = window.location.hostname;
+      // When deployed (e.g. on Vercel), port is empty. NEVER default to 8080 on cloud domains!
+      const portPart = (window.location.port && window.location.port !== '80' && window.location.port !== '443')
+        ? `:${window.location.port}`
+        : (isLocal ? (window.location.port ? `:${window.location.port}` : ':8080') : '');
+      const mobileCamUrl = `${window.location.protocol}//${mobileHost}${portPart}/mobile-cam.html`;
 
-    if (txtMobileCamUrl) txtMobileCamUrl.value = mobileCamUrl;
-    if (mobilePairQrImg) {
-      mobilePairQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mobileCamUrl)}`;
+      if (txtMobileCamUrl) txtMobileCamUrl.value = mobileCamUrl;
+      if (mobilePairQrImg) {
+        mobilePairQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mobileCamUrl)}`;
+      }
+      return mobileCamUrl;
     }
+
+    refreshMobileUrl();
 
     let watcherTimer = null;
 
     btnPairMobileCam.addEventListener('click', (e) => {
       e.preventDefault();
+      refreshMobileUrl();
       modalPairMobileCamBackdrop.style.display = 'flex';
 
       // Start watching for mobile connection

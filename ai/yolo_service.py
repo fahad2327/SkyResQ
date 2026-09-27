@@ -84,7 +84,8 @@ class YOLOService:
     def load_model(self) -> bool:
         """
         Loads the YOLO model(s) into memory.
-        Returns True if loaded, False if model weight file or package is missing.
+        If local weights are missing, attempts to initialize 'yolov8n.pt' which
+        Ultralytics will automatically download.
         """
         if self._model_loaded and self._model is not None:
             return True
@@ -94,19 +95,13 @@ class YOLOService:
             self._model_loaded = False
             return False
 
-        if not self.is_model_present():
-            logger.info(
-                f"[SkyResQ YOLO] Model weight file '{self.model_path}' not found. "
-                "Service will run in TEST_IMAGE / SIMULATION fallback mode."
-            )
-            self._model_loaded = False
-            return False
-
         try:
             from ultralytics import YOLO
-            logger.info(f"[SkyResQ YOLO] Loading primary YOLO model from: {self.model_path}")
-            self._model = YOLO(self.model_path)
+            target_model = self.model_path if self.is_model_present() else "yolov8n.pt"
+            logger.info(f"[SkyResQ YOLO] Loading primary YOLO model: {target_model}")
+            self._model = YOLO(target_model)
             self._model_loaded = True
+            self.model_name = os.path.basename(target_model)
 
             if self.custom_model_path and os.path.isfile(self.custom_model_path):
                 try:
@@ -126,8 +121,8 @@ class YOLOService:
     def get_health_status(self) -> DetectionHealthResponse:
         """Returns comprehensive health and readiness state."""
         self._check_package_availability()
-        model_exists = self.is_model_present()
-        detection_mode = "TEST_IMAGE" if (self._ultralytics_available and model_exists) else "SIMULATION"
+        model_exists = self.is_model_present() or self._model_loaded
+        detection_mode = "LIVE_YOLO" if (self._ultralytics_available and (model_exists or self._model_loaded)) else "SIMULATION"
 
         return DetectionHealthResponse(
             status="ok",
@@ -177,8 +172,7 @@ class YOLOService:
             )
 
         # Attempt to load model if available
-        can_run_real_yolo = self.is_available() and self.is_model_present()
-        if can_run_real_yolo:
+        if self.is_available() and not self._model_loaded:
             self.load_model()
 
         if self._model_loaded and self._model is not None:

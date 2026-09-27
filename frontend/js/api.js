@@ -291,7 +291,8 @@ const SkyResQAPI = (() => {
      * @param {number} [longitude] - Optional GPS longitude
      */
     async uploadDetectionImage(file, confThreshold = 0.25, latitude = null, longitude = null) {
-      const url = `${BASE_URL}${ENDPOINTS.DETECTION_IMAGE}`;
+      const base = getEffectiveBaseUrl();
+      const url = `${base}${ENDPOINTS.DETECTION_IMAGE}`;
       const formData = new FormData();
       formData.append('file', file, file.name || 'webcam_frame.jpg');
       formData.append('conf_threshold', confThreshold.toString());
@@ -338,6 +339,13 @@ const SkyResQAPI = (() => {
           status: 0
         };
       }
+    },
+
+    /**
+     * Alias for uploadDetectionImage for compatibility
+     */
+    async detectImage(file, confThreshold = 0.25, latitude = null, longitude = null) {
+      return await this.uploadDetectionImage(file, confThreshold, latitude, longitude);
     },
 
     /**
