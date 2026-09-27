@@ -9,6 +9,13 @@ Safety & Ethics:
 """
 
 import os
+# Prevent multi-thread memory and CPU thrashing on shared containers (Render / Vercel)
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -208,13 +215,14 @@ class YOLOService:
     ) -> ImageDetectionResponse:
         """Executes actual Ultralytics neural YOLO detection."""
         try:
-            def _extract_dets(res_obj, offset_cls=0):
+            def _extract_dets(res_obj, offset_cls=0, min_conf=None):
                 extracted = []
+                effective_conf = min_conf if min_conf is not None else conf
                 if res_obj and res_obj.boxes is not None:
                     names_map = res_obj.names or {}
                     for b in res_obj.boxes:
                         sc = float(b.conf[0])
-                        if sc < conf:
+                        if sc < effective_conf:
                             continue
                         c_id = int(b.cls[0])
                         r_name = names_map.get(c_id, f"class_{c_id}").lower().strip()
@@ -259,12 +267,12 @@ class YOLOService:
             except Exception:
                 pass
 
-            is_cloud = bool(os.environ.get("RENDER") or os.environ.get("VERCEL"))
+            is_cloud = bool(os.environ.get("RENDER") or os.environ.get("VERCEL") or os.environ.get("SKYRESQ_ENV") == "production")
             predict_kwargs = {
                 "source": image_path,
                 "conf": conf,
                 "iou": DEFAULT_IOU_THRESHOLD,
-                "imgsz": 480 if is_cloud else 640,
+                "imgsz": 320 if is_cloud else 640,
                 "verbose": False,
                 "device": "cpu",
                 "max_det": 20
@@ -274,17 +282,22 @@ class YOLOService:
 
             raw_detections: List[DetectionItem] = []
 
-            # 1. Base model detection (COCO 80 classes: persons, smart phones, laptops, etc.)
+            # 1. Base model detection (COCO SAR classes: persons, smart phones, laptops, bottles, etc.)
             if self._model:
                 base_results = self._model.predict(**predict_kwargs)
                 if base_results and len(base_results) > 0:
                     raw_detections.extend(_extract_dets(base_results[0], offset_cls=0))
 
             # 2. Custom model detection (custom classes e.g. fan, custom items)
+            # Enforce strict 0.55 confidence threshold to eliminate false fan hallucinations on walls/backgrounds
             if self._custom_model:
-                custom_results = self._custom_model.predict(**predict_kwargs)
+                custom_kwargs = predict_kwargs.copy()
+                custom_kwargs.pop("classes", None)  # Custom model uses its own class indexes
+                custom_conf = max(conf, 0.55)
+                custom_kwargs["conf"] = custom_conf
+                custom_results = self._custom_model.predict(**custom_kwargs)
                 if custom_results and len(custom_results) > 0:
-                    raw_detections.extend(_extract_dets(custom_results[0], offset_cls=1000))
+                    raw_detections.extend(_extract_dets(custom_results[0], offset_cls=1000, min_conf=0.55))
 
             # 3. Non-Maximum Suppression (NMS) deduplication across models
             detections: List[DetectionItem] = []

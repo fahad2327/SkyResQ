@@ -27,11 +27,29 @@ else:
 DEFAULT_MODEL_PATH = os.path.join(MODELS_DIR, DEFAULT_MODEL_NAME)
 YOLO_MODEL_PATH = os.environ.get("YOLO_MODEL_PATH", DEFAULT_MODEL_PATH)
 
-# Search and Rescue Priority Class IDs (None or empty means detect ALL available classes)
-SAR_TARGET_CLASS_IDS: Optional[List[int]] = None
+# Search and Rescue Priority Class IDs
+# Limits detection to:
+# - Person (0)
+# - Vehicles: Bicycle (1), Car (2), Motorcycle (3), Bus (5), Truck (7), Boat (8)
+# - Emergency: Fire Hydrant (10)
+# - Gear / Rescue bags: Backpack (24), Handbag (26), Suitcase (28)
+# - Objects: Bottle (39), Cup (41)
+# - Furniture / Indoors: Chair (56), Couch (57), Bed (59), Dining Table (60)
+# - Electronics: TV/Monitor (62), Laptop (63), Mouse (64), Remote (65), Keyboard (66), Cell Phone (67)
+# - Tools / Essentials: Book (73), Clock (74), Scissors (76)
+SAR_TARGET_CLASS_IDS: Optional[List[int]] = [
+    0,   # person
+    1, 2, 3, 5, 7, 8,  # vehicles (bicycle, car, motorcycle, bus, truck, boat)
+    10,  # fire hydrant
+    24, 26, 28,  # backpack, handbag, suitcase
+    39, 41,  # bottle, cup
+    56, 57, 59, 60,  # chair, couch, bed, dining table
+    62, 63, 64, 65, 66, 67,  # tv, laptop, mouse, remote, keyboard, cell phone
+    73, 74, 76  # book, clock, scissors
+]
 
-# Inference thresholds
-DEFAULT_CONFIDENCE_THRESHOLD = float(os.environ.get("YOLO_CONF_THRESHOLD", "0.25"))
+# Inference thresholds (0.45 prevents random noise and false positives)
+DEFAULT_CONFIDENCE_THRESHOLD = float(os.environ.get("YOLO_CONF_THRESHOLD", "0.45"))
 DEFAULT_CONF_THRESHOLD = DEFAULT_CONFIDENCE_THRESHOLD
 DEFAULT_IOU_THRESHOLD = float(os.environ.get("YOLO_IOU_THRESHOLD", "0.45"))
 

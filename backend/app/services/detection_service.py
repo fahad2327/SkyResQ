@@ -300,12 +300,24 @@ class DetectionService:
         with open(upload_path, "wb") as f:
             f.write(file_bytes)
 
+        is_webcam = "webcam" in original_filename.lower() or source_type == "laptop_webcam"
+        is_continuous = (
+            is_webcam
+            or source_type in ("laptop_webcam", "mobile_camera", "phone", "drone_stream")
+            or "mobile" in original_filename.lower()
+            or "webcam" in original_filename.lower()
+        )
+
+        # For continuous live streams (webcam/phone), skip heavy OpenCV annotated JPEG disk writes
+        # because the frontend already renders high-resolution bounding boxes directly on HTML5 Canvas.
+        should_annotate = not is_continuous
+
         # Execute YOLO inference through decoupled AI service
         inference_result = yolo_service.predict_image(
             image_path=upload_path,
             conf_threshold=conf_threshold,
-            annotate=True,
-            output_annotated_path=annotated_path,
+            annotate=should_annotate,
+            output_annotated_path=annotated_path if should_annotate else None,
             image_url_prefix="/media/detections"
         )
 
@@ -318,14 +330,6 @@ class DetectionService:
                 person_count += 1
             elif cls in HAZARD_CLASS_NAMES:
                 hazard_count += 1
-
-        is_webcam = "webcam" in original_filename.lower() or source_type == "laptop_webcam"
-        is_continuous = (
-            is_webcam
-            or source_type in ("laptop_webcam", "mobile_camera", "phone", "drone_stream")
-            or "mobile" in original_filename.lower()
-            or "webcam" in original_filename.lower()
-        )
         now_ts = time.time()
 
         should_record_run = not is_continuous or (hazard_count > 0)

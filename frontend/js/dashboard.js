@@ -2729,7 +2729,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const blob = await new Promise(resolve => hCanvas.toBlob(resolve, 'image/jpeg', 0.70));
       if (!blob) return;
 
-      const confThreshold = webcamConfSlider ? parseFloat(webcamConfSlider.value) / 100 : 0.25;
+      const confThreshold = webcamConfSlider ? parseFloat(webcamConfSlider.value) / 100 : 0.45;
       
       // Send frame with current live GPS coordinates
       const res = await SkyResQAPI.uploadDetectionImage(

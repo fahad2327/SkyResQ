@@ -23,3 +23,11 @@ services:
         value: ./backend/data
       - key: SKYRESQ_MEDIA_DIR
         value: ./media
+      - key: RENDER
+        value: "true"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
