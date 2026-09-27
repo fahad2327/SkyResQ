@@ -684,18 +684,20 @@
       clearOverlay();
     }
 
+    let isUploading = false;
     async function runTransmissionCycle() {
       if (!isStreaming) return;
       const start = performance.now();
       await captureAndUploadFrame();
       const elapsed = performance.now() - start;
-      const delay = Math.max(100, 600 - elapsed);
+      const delay = Math.max(400, 1500 - elapsed);
       streamTimer = setTimeout(runTransmissionCycle, delay);
     }
 
     // 5. Capture Frame and Upload to Backend
     async function captureAndUploadFrame() {
-      if (!video || !video.videoWidth) return;
+      if (isUploading || !video || !video.videoWidth) return;
+      isUploading = true;
 
       const oCtx = offscreen.getContext('2d');
       offscreen.width = video.videoWidth;
@@ -703,7 +705,10 @@
       oCtx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
 
       offscreen.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          isUploading = false;
+          return;
+        }
         const formData = new FormData();
         formData.append('file', blob, 'mobile_frame.jpg');
         formData.append('device_id', deviceId);
@@ -729,6 +734,8 @@
           console.warn('Frame transmission error:', err);
           txtConnection.textContent = 'RELAY RETRYING';
           txtConnection.style.color = 'var(--amber)';
+        } finally {
+          isUploading = false;
         }
       }, 'image/jpeg', 0.85);
     }

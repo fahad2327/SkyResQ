@@ -70,7 +70,7 @@ const SkyResQAPI = (() => {
 
   const getEffectiveBaseUrl = () => currentBaseUrl || getBaseUrl();
 
-  const DEFAULT_TIMEOUT_MS = 8000;
+  const DEFAULT_TIMEOUT_MS = 25000;
 
   // Registered Backend Endpoints
   const ENDPOINTS = {
@@ -304,7 +304,7 @@ const SkyResQAPI = (() => {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout for AI inference
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for AI inference
 
       try {
         const response = await fetch(url, {
